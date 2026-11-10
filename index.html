@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="tr">
 <head>
-<meta name="app-ver" content="a295ae745a">
+<meta name="app-ver" content="51cb1a33f3">
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#07080c">
@@ -377,10 +377,14 @@ label.chip{background:none;padding:0;border-radius:999px;font:inherit}
 .man-tools .field.inline .inp{width:118px}
 .man-tools .tpl-name{min-width:200px;flex:1 1 220px;max-width:340px}
 .man-tools .tpl-name input{font-family:var(--f-body);font-size:14px}
-.man-editor svg.moving{cursor:grabbing}
+.man-editor.moving svg{cursor:grabbing}
+.man-selbar{display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px;margin-top:8px;padding:10px 12px;border-radius:12px;border:1px solid rgba(61,107,255,.35);background:rgba(61,107,255,.08)}
+.man-selbar .btn{padding:7px 12px;font-size:13px}
 .btn.armed{border-color:var(--bad);color:var(--bad);background:var(--bad-soft)}
 .v3d-cap{position:absolute;left:16px;bottom:16px;z-index:2;padding:9px 16px 9px 14px;border-left:3px solid var(--accent2);border-radius:0 10px 10px 0;background:rgba(10,11,13,.72);color:#fff;font:700 clamp(16px,2.4vw,22px)/1.1 var(--f-display);letter-spacing:.06em;text-transform:uppercase;opacity:0;transform:translateY(8px);transition:opacity .35s,transform .35s;pointer-events:none}
 .v3d-cap.on{opacity:1;transform:none}
+.meas-val{font:700 20px var(--f-mono);color:var(--accent)}
+#cmp3d .bhead{align-items:center}
 .btn.shot{display:inline-flex;align-items:center;gap:7px;padding:7px 12px;font-size:13px}
 .btn.shot svg{width:17px;height:17px;fill:none;stroke:currentColor;stroke-width:1.6;stroke-linejoin:round}
 .v3d-msg{color:#aab4bc}
@@ -801,6 +805,7 @@ body::before{background:#07080c}
         <div class="chips">
           <label class="chip" for="t_cut"><input type="checkbox" id="t_cut"><span>Kesit</span></label>
           <label class="chip" for="t_solo"><input type="checkbox" id="t_solo"><span>Tek kat</span></label>
+          <label class="chip" for="t_measure"><input type="checkbox" id="t_measure"><span>Ölç (cetvel)</span></label>
         </div>
       </div>
       <div class="v3d-sub" id="cut-bar" hidden>
@@ -811,6 +816,7 @@ body::before{background:#07080c}
         <span class="mono" id="cut-val"></span>
       </div>
       <div class="v3d-sub" id="solo-bar" hidden></div>
+      <div class="v3d-sub" id="meas-bar" hidden></div>
       <div class="v3d-sub heat" id="heat-bar" hidden>
         <div class="heat-in">
           <b>Isı haritası</b>
@@ -911,6 +917,7 @@ body::before{background:#07080c}
           <button type="button" data-tool="paint" class="on">Boya</button>
           <button type="button" data-tool="erase">Sil</button>
           <button type="button" data-tool="move">Taşı</button>
+          <button type="button" data-tool="select">Seç</button>
         </div>
         <label class="chip" for="man-auto"><input type="checkbox" id="man-auto" checked><span>Grup dolunca sonrakine geç</span></label>
       </div>
@@ -943,6 +950,7 @@ body::before{background:#07080c}
       <div class="man-left">
         <figure class="viz"><figcaption id="man-cap">Kat 1</figcaption><div id="man-editor" class="man-editor"></div></figure>
         <div id="man-flash" class="hint" aria-live="polite"></div>
+        <div id="man-selbar" class="man-selbar" hidden></div>
       </div>
       <div class="man-right">
         <div id="man-sum" class="man-sum"></div>
@@ -951,7 +959,7 @@ body::before{background:#07080c}
     </div>
     <div class="sub"><h3>3D görünüm</h3><div id="tb-man"></div><div id="man-slot" class="slot"></div></div>
     <div class="hint" style="margin-top:8px">Buradaki kutu ve hücre ayarları sadece bu sekmede geçerlidir; “Kutu hesabı”ndaki kutuyu, hücreyi ve planları değiştirmez. Sadece kenar boşluğu ve işçilik süreleri iki tarafta ortaktır.</div>
-    <div class="hint" style="margin-top:4px">Yuvaya dokunun ya da parmağınızı sürükleyin: seçili grup (fırça) o yuvalara yerleşir. Aynı gruba ait bir hücreden başlayıp sürüklerseniz o hücreler kaldırılır. Kutuplar, şeritler ve kat geçişleri otomatik planlardaki kurallarla çizilir. 3D ayarları (nikel, tutucu, ısı haritası…) “3D görünüm” sekmesindekilerle aynıdır.</div>
+    <div class="hint" style="margin-top:4px">Yuvaya dokunun ya da parmağınızı sürükleyin: seçili grup (fırça) o yuvalara yerleşir. Aynı gruba ait bir hücreden başlayıp sürüklerseniz o hücreler kaldırılır. <b>Sil</b> ile dokunduğunuz ya da üzerinden geçtiğiniz hücreler silinir, <b>Taşı</b> ile bir grubu sürükleyip yerini değiştirirsiniz, <b>Seç</b> ile kutu çizip birden çok hücreyi seçer; topluca taşır, siler ya da bir gruba atarsınız. Kutuplar, şeritler ve kat geçişleri otomatik planlardaki kurallarla çizilir. 3D ayarları (nikel, tutucu, ısı haritası…) “3D görünüm” sekmesindekilerle aynıdır.</div>
   </section>
 </div>
 
@@ -959,6 +967,12 @@ body::before{background:#07080c}
   <section class="block" id="cmp-block">
     <div class="bhead"><h2>Planları karşılaştır</h2><span class="meta">Daha iyi değer yeşil</span></div>
     <div id="cmp-out"></div>
+  </section>
+  <section class="block" id="cmp3d" hidden>
+    <div class="bhead"><h2>3D karşılaştırma</h2>
+      <div class="seg" role="group" aria-label="Görünüm" id="cmp3d-mode"><button type="button" data-cm="side" class="on">Yan yana</button><button type="button" data-cm="over">Üst üste</button></div></div>
+    <div id="cmp-slot" class="slot"></div>
+    <div class="hint" id="cmp3d-hint" style="margin-top:8px"></div>
   </section>
 </div>
 
@@ -1042,6 +1056,7 @@ const V3 = (() => {
   let A = null;                      // animasyon kayıtları (build doldurur)
   const sim = {i: 0, p: 1, playing: false, speed: 1, autoCam: true, hold: 0};
   let fly = null, lastT = 0, dirty = false;
+  let cmpPack = null, cmpOn = false, cmpSaved = null, cmpStSaved = null, cmpPage = false;   // 3D karşılaştırma
   const ease = t => 1 - Math.pow(1 - t, 3);
   const $$ = id => document.getElementById(id);
   const visible = () => { const h = host || $$("v3d"); return !!(h && h.offsetParent !== null); };
@@ -1089,6 +1104,12 @@ const V3 = (() => {
     controls.autoRotateSpeed = 1.1;
     controls.addEventListener("change", () => { needs = true; });
     controls.addEventListener("start", () => { fly = null; stopTour(); });
+    renderer.domElement.addEventListener("pointerdown", e => { measDown = st.measure && mode !== "sim" ? {x: e.clientX, y: e.clientY, t: performance.now()} : null; });
+    renderer.domElement.addEventListener("pointerup", e => {
+      const d = measDown; measDown = null;
+      if (!d || !st.measure || Math.hypot(e.clientX - d.x, e.clientY - d.y) > 7 || performance.now() - d.t > 700) return;
+      measTap(e);
+    });
     applyQuality();
     if (window.ResizeObserver) new ResizeObserver(resize).observe(host); else window.addEventListener("resize", resize);
     resize();
@@ -1409,8 +1430,8 @@ const V3 = (() => {
     };
   }
 
-  function show(R, pl){ cur = {R, pl}; if (!visible()){ dirty = true; return; } if (!init()) return; build(); dirty = false; }
-  function clear(){ cur = null; A = null; dirty = false; if (pack && scene){ scene.remove(pack); dispose(pack); pack = null; needs = true; } }
+  function show(R, pl){ if (cmpOn){ cmpSaved = {R, pl}; return; } cur = {R, pl}; if (!visible()){ dirty = true; return; } if (!init()) return; build(); dirty = false; }
+  function clear(){ if (cmpOn){ cmpSaved = null; return; } cur = null; A = null; dirty = false; if (pack && scene){ scene.remove(pack); dispose(pack); pack = null; needs = true; } }
 
   function build(){
     if (!cur || !ok) return;
@@ -1993,13 +2014,13 @@ const V3 = (() => {
       sc.updateProjectionMatrix();
       const gy = -B.H / 2 - (st.walls ? Math.max(2, Math.min(5, diag * 0.006)) : 0) - 0.6;   // duvar açıkken zemin alt duvarın altında
       const floor = new THREE.Mesh(new THREE.CircleGeometry(diag * 1.6, 72), new THREE.MeshBasicMaterial({map: floorTexture("#161c33"), transparent: true, depthWrite: false}));
-      floor.rotation.x = -Math.PI / 2; floor.position.y = gy - 0.3; pack.add(floor);
+      floor.rotation.x = -Math.PI / 2; floor.position.y = gy - 0.3; floor.userData.floor = "disc"; pack.add(floor);
       const fw = (st.walls ? B.L : pmax.x - pmin.x) * 1.5, fd = (st.walls ? B.W : pmax.z - pmin.z) * 1.6;
       const blob = new THREE.Mesh(new THREE.PlaneGeometry(fw, fd), new THREE.MeshBasicMaterial({map: contactTexture(), transparent: true, depthWrite: false}));
-      blob.rotation.x = -Math.PI / 2; blob.position.set(st.walls ? 0 : (pmin.x + pmax.x) / 2, gy - 0.1, st.walls ? 0 : (pmin.z + pmax.z) / 2); pack.add(blob);
+      blob.rotation.x = -Math.PI / 2; blob.position.set(st.walls ? 0 : (pmin.x + pmax.x) / 2, gy - 0.1, st.walls ? 0 : (pmin.z + pmax.z) / 2); blob.userData.floor = "blob"; pack.add(blob);
       if (shadows){
         const shadow = new THREE.Mesh(new THREE.PlaneGeometry(diag * 4, diag * 4), new THREE.ShadowMaterial({opacity: 0.42}));
-        shadow.rotation.x = -Math.PI / 2; shadow.position.y = gy; shadow.receiveShadow = true; pack.add(shadow);
+        shadow.rotation.x = -Math.PI / 2; shadow.position.y = gy; shadow.receiveShadow = true; shadow.userData.floor = "shadow"; pack.add(shadow);
       }
     }
 
@@ -2024,7 +2045,7 @@ const V3 = (() => {
 
     fxTune();
     const keyNow = [pl.id, B.L, B.W, B.H].join("|");
-    if (keyNow !== fitKey){ fitKey = keyNow; setView(curView, true); if (isSim){ sim.i = 0; sim.p = 1; sim.playing = false; } }
+    if (keyNow !== fitKey){ fitKey = keyNow; clearMeasure(); measBar(); setView(curView, true); if (isSim){ sim.i = 0; sim.p = 1; sim.playing = false; } }
     const meta = $$("v3d-meta"); if (meta) meta.textContent = `${pl.shape} · ${o.name} · ${pl.used} hücre`;
     if (isSim){ renderStepList(); apply(); updateSimUI(); }
     needs = true;
@@ -2145,6 +2166,121 @@ const V3 = (() => {
     flyTo(sc.dir, sc.k, false, sc.tgt, sc.dur);
   }
   function stopTour(){ if (tour){ tour = null; caption(null); tourLabels(true); } }
+
+  // ---- ölçü aracı (cetvel): iki noktaya dokun, aradaki mesafe mm olarak çıksın ----
+  let measG = null, measPts = [], measLast = null, measDown = null, ray = null;
+  function measGroup(){ if (!measG) measG = new THREE.Group(); if (measG.parent !== scene) scene.add(measG); return measG; }
+  function clearMeasure(){
+    if (measG) measG.children.slice().forEach(o => { measG.remove(o); if (o.geometry) o.geometry.dispose(); if (o.material){ if (o.material.map) o.material.map.dispose(); o.material.dispose(); } });
+    measPts = []; measLast = null; needs = true;
+  }
+  const measU = () => cur ? Math.hypot(cur.R.box.L, cur.R.box.W, cur.R.box.H) / 22 : 20;
+  function measDot(pt){
+    const U = measU(), m = new THREE.Mesh(new THREE.SphereGeometry(U * 0.1, 16, 12), new THREE.MeshBasicMaterial({color: 0xff8f1f, depthTest: false, transparent: true}));
+    m.position.copy(pt); m.renderOrder = 30; measGroup().add(m);
+  }
+  function measSeg(a, b){
+    const U = measU(), d = a.distanceTo(b);
+    const cyl = new THREE.Mesh(new THREE.CylinderGeometry(U * 0.03, U * 0.03, d, 10), new THREE.MeshBasicMaterial({color: 0xff8f1f, depthTest: false, transparent: true}));
+    cyl.position.copy(a).add(b).multiplyScalar(0.5); cyl.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), b.clone().sub(a).normalize()); cyl.renderOrder = 29; measGroup().add(cyl);
+    const lb = label(`${fmt(d, 1)} mm`, U, "rgba(255,143,31,.96)", "#170a00", 1.05);
+    lb.position.copy(cyl.position).add(new THREE.Vector3(0, U * 0.6, 0)); lb.renderOrder = 31; measGroup().add(lb);
+  }
+  // dokunulan yüzey noktası: önce dolu parçalar (hücre, nikel, BMS…), yoksa saydam duvar / kutu
+  function measPick(e){
+    if (!ray) ray = new THREE.Raycaster();
+    const rc = renderer.domElement.getBoundingClientRect();
+    ray.setFromCamera(new THREE.Vector2(((e.clientX - rc.left) / rc.width) * 2 - 1, -((e.clientY - rc.top) / rc.height) * 2 + 1), camera);
+    const objs = [];
+    [pack, cmpPack].forEach(g => g && g.traverse(o => { if (o.isMesh && o.visible && o.material && !o.material.isShadowMaterial && !o.userData.floor && !(o.material.isMeshBasicMaterial && o.material.map)) objs.push(o); }));
+    const hits = ray.intersectObjects(objs, false);
+    if (!hits.length) return null;
+    const solid = hits.find(h => !(h.object.material.transparent && h.object.material.opacity < 0.6));
+    return (solid || hits[0]).point.clone();
+  }
+  function measBar(){
+    const b = $$("meas-bar"); if (!b) return;
+    b.hidden = !st.measure; if (!st.measure) return;
+    const L = measLast;
+    b.innerHTML = `<b>Ölç</b>`
+      + (L ? `<span class="meas-val">${fmt(L.d, 1)} mm</span><span class="hint">${DIM_NAMES.L} ${fmt(L.dx, 1)} · ${DIM_NAMES.W} ${fmt(L.dz, 1)} · ${DIM_NAMES.H} ${fmt(L.dy, 1)} mm</span>` : "")
+      + `<span class="hint">${measPts.length === 1 ? "Şimdi ikinci noktaya dokunun." : L ? "Yeni ölçüm için yine iki noktaya dokunun." : "Ölçmek istediğiniz iki noktaya sırayla dokunun: hücre, nikel, BMS, kutu duvarı…"}</span>`
+      + (measPts.length ? `<button type="button" class="btn" id="meas-clear">Temizle</button>` : "");
+    const cb = b.querySelector("#meas-clear"); if (cb) cb.onclick = () => { clearMeasure(); measBar(); };
+  }
+  function setMeasure(on){
+    st.measure = !!on; if (!on) clearMeasure();
+    if (renderer) renderer.domElement.style.cursor = on ? "crosshair" : "";
+    if (on) stopTour();
+    measBar(); needs = true;
+  }
+  function measTap(e){
+    const pt = measPick(e); if (!pt) return;
+    if (measPts.length >= 2) clearMeasure();
+    measPts.push(pt); measDot(pt);
+    if (measPts.length === 2){ const [a, b] = measPts; measSeg(a, b); measLast = {d: a.distanceTo(b), dx: Math.abs(b.x - a.x), dy: Math.abs(b.y - a.y), dz: Math.abs(b.z - a.z)}; }
+    measBar(); needs = true;
+  }
+
+  // ---- 3D karşılaştırma: iki plan yan yana ya da üst üste (B turuncu saydam) ----
+  function endCompare(){
+    if (!cmpOn) return;
+    cmpOn = false;
+    if (cmpPack && scene){ scene.remove(cmpPack); dispose(cmpPack); cmpPack = null; }
+    if (cmpStSaved){ Object.assign(st, cmpStSaved); cmpStSaved = null; }
+    cur = cmpSaved; cmpSaved = null;
+    fitKey = null; dirty = true; clearMeasure();
+  }
+  function showCompare(R, plA, plB, layout){
+    const slot = $$("cmp-slot"), h = host || $$("v3d");
+    if (h && slot && h.parentNode !== slot) slot.appendChild(h);
+    if (!init()) return false;
+    if (!cmpOn){
+      cmpOn = true; cmpSaved = cur;
+      cmpStSaved = {labels: st.labels, flow: st.flow, cut: st.cut, solo: st.solo, explode: st.explode, dims: st.dims, taps: st.taps, harness: st.harness, lid: st.lid, wrap: st.wrap, heat: st.heat};
+    }
+    Object.assign(st, {labels: false, flow: false, cut: false, solo: false, explode: 0, dims: false, taps: false, harness: false, lid: false, wrap: false, heat: false});
+    stopTour(); clearMeasure(); mode = "view"; sim.playing = false; lidAng = LID_OPEN;
+    if (cmpPack){ scene.remove(cmpPack); dispose(cmpPack); cmpPack = null; }
+    const B = R.box, diag = Math.hypot(B.L, B.W, B.H), U = diag / 22;
+    const side = layout !== "over", off = side ? B.L / 2 + Math.max(40, B.L * 0.2) : 0;
+    const hideLabels = g => g.traverse(o => { if (o.isSprite) o.visible = false; });
+    // A: kurulur, ayrı bir gruba alınır (B kurulurken silinmesin)
+    cur = {R, pl: plA}; build();
+    cmpPack = pack; pack = null;
+    hideLabels(cmpPack);
+    cmpPack.traverse(o => { if (o.userData.floor === "disc" || o.userData.floor === "shadow") o.visible = false; });
+    cmpPack.position.x = -off;
+    // B
+    cur = {R, pl: plB}; build();
+    hideLabels(pack);
+    pack.position.x = off;
+    pack.traverse(o => { if (o.userData.floor === "disc" || o.userData.floor === "shadow"){ o.position.x -= off; if (side && o.userData.floor === "disc") o.scale.setScalar(1.5); } });
+    if (!side){
+      // üst üste: A olduğu gibi, B turuncu saydam; farklı yerdeki hücreler hemen görünür
+      const ghost = new THREE.MeshStandardMaterial({color: 0xff8f1f, transparent: true, opacity: 0.32, depthWrite: false, roughness: 0.5, metalness: 0});
+      const edge = new THREE.LineBasicMaterial({color: 0xff8f1f, transparent: true, opacity: 0.9});
+      pack.traverse(o => {
+        if (o.userData.floor) return;
+        if (o.isMesh){ const old = o.material; o.material = ghost; (Array.isArray(old) ? old : [old]).forEach(m => { if (m && m !== ghost){ if (m.map) m.map.dispose(); m.dispose(); } }); if (o.isInstancedMesh) o.instanceColor = null; o.castShadow = false; o.renderOrder = 5; }
+        else if (o.isLine){ const old = o.material; o.material = edge; if (old && old !== edge) old.dispose(); }
+      });
+    }
+    const tag = (t, bg, x) => { const lb = label(t, U, bg, "#ffffff", 1.5); lb.position.set(x, B.H / 2 + U * 1.1, 0); return lb; };
+    cmpPack.add(tag("A", "#2f5be6", side ? 0 : -B.L / 2));
+    pack.add(tag("B", "#e8740c", side ? 0 : B.L / 2));
+    // gölge alanı iki paketi de kapsasın
+    const ext = diag * 0.8 + off, sc = keyLight.shadow.camera; sc.left = -ext; sc.right = ext; sc.top = ext; sc.bottom = -ext; sc.updateProjectionMatrix();
+    // kamera: ikisini birden çerçevele
+    resize();
+    const half = new THREE.Vector3(B.L / 2 + off, B.H / 2, B.W / 2), radius = half.length() * 1.04;
+    const fv = camera.fov * Math.PI / 180, fh = 2 * Math.atan(Math.tan(fv / 2) * camera.aspect), dist = radius / Math.sin(Math.min(fv, fh) / 2) * (side ? 0.74 : 0.82);
+    const dir = side ? new THREE.Vector3(0.3, 0.62, 1).normalize() : dirFor("iso");
+    camera.near = dist / 150; camera.far = dist * 12; camera.updateProjectionMatrix();
+    fly = null; controls.target.set(0, 0, 0); camera.position.copy(dir.multiplyScalar(dist)); controls.update();
+    needs = true;
+    return true;
+  }
   function setView(v, instant){
     curView = v;
     document.querySelectorAll(".v3d-tools .trow .seg button[data-view]").forEach(b => b.classList.toggle("on", b.dataset.view === v));
@@ -2181,12 +2317,15 @@ const V3 = (() => {
   }
 
   function setMode(m){
-    const slot = $(m === "sim" ? "sim-slot" : m === "man" ? "man-slot" : "v3d-slot"), h = host || $("v3d");
+    if (cmpPage && m !== "cmp") endCompare();
+    cmpPage = m === "cmp";
+    const slot = $(m === "sim" ? "sim-slot" : m === "man" ? "man-slot" : m === "cmp" ? "cmp-slot" : "v3d-slot"), h = host || $("v3d");
     let moved = false;
     if (h && slot && h.parentNode !== slot){ slot.appendChild(h); moved = true; }
     // 3D düğme takımı (Kutu, Nikel, Isı haritası…) açık olan sekmeye taşınır; ayarlar her yerde aynı kalır
     const tb = document.querySelector(".v3d-tools"), tslot = $(m === "man" ? "tb-man" : "tb-home");
     if (tb && tslot && tb.parentNode !== tslot) tslot.appendChild(tb);
+    if (m === "cmp"){ mode = "view"; sim.playing = false; return; }   // karşılaştırma kendi sahnesini kurar (showCompare)
     const im = m === "sim" ? "sim" : "view";
     const changed = im !== mode;
     mode = im; if (changed) sim.playing = false;
@@ -2202,13 +2341,14 @@ const V3 = (() => {
 
   function bindUI(){
     document.querySelectorAll(".v3d-tools .trow .seg button[data-view]").forEach(b => b.addEventListener("click", () => setView(b.dataset.view)));
-    const toggles = [["t_nickel", "nickel"], ["t_box", "box"], ["t_labels", "labels"], ["t_taps", "taps"], ["t_bms", "bms"], ["t_holder", "holder"], ["t_shadow", "ground"], ["t_realcell", "real"], ["t_show", "show"], ["t_wrap", "wrap"], ["t_cut", "cut"], ["t_solo", "solo"],
+    const toggles = [["t_nickel", "nickel"], ["t_box", "box"], ["t_labels", "labels"], ["t_taps", "taps"], ["t_bms", "bms"], ["t_holder", "holder"], ["t_shadow", "ground"], ["t_realcell", "real"], ["t_show", "show"], ["t_wrap", "wrap"], ["t_measure", "measure"], ["t_cut", "cut"], ["t_solo", "solo"],
       ["t_flow", "flow"], ["t_heat", "heat"], ["t_dims", "dims"], ["t_walls", "walls"], ["t_lid", "lid"], ["t_harness", "harness"]];
     toggles.forEach(([id, k]) => {
       const el = $$(id); if (!el) return; st[k] = el.checked;
       el.addEventListener("change", () => {
         st[k] = el.checked;
-        if (k === "show"){ if (st.show) stopTour(); needs = true; return; }              // vitrin: sadece döndürme, yeniden çizmeye gerek yok
+        if (k === "show"){ if (st.show) stopTour(); needs = true; return; }
+        if (k === "measure"){ setMeasure(st.measure); return; }              // vitrin: sadece döndürme, yeniden çizmeye gerek yok
         if (k === "lid" && st.lid) lidAng = LID_OPEN;          // kapak açık başlar, kapanarak gelir
         if (k === "lid" && !st.lid && lidObj){ needs = true; return; }   // açılarak kaybolur, yeniden çizmeye gerek yok
         if (ok && cur) build();
@@ -2376,9 +2516,9 @@ const V3 = (() => {
       new THREE.GLTFExporter().parse(root, res => resolve(new Blob([res], {type: "model/gltf-binary"})), {binary: true, onlyVisible: true, maxTextureSize: 1024});
     });
   }
-  function setPlan(R, pl){ cur = {R, pl}; dirty = true; }
+  function setPlan(R, pl){ if (cmpOn){ cmpSaved = {R, pl}; return; } cur = {R, pl}; dirty = true; }
   const isManual = () => !!(cur && cur.pl && cur.pl.manual);
-  return {show, clear, bindUI, setView, setMode, onShow, setPlan, isManual, renderImage, exportGLB};
+  return {show, clear, bindUI, setView, setMode, onShow, setPlan, isManual, renderImage, exportGLB, showCompare, stopCompare: endCompare};
 })();
 </script>
 <script>
@@ -3098,14 +3238,17 @@ function toggleCmp(P, id){
   updateCmpBadge();
 }
 function updateCmpBadge(){ const b = document.getElementById("cmp-cnt"); if (b) b.textContent = cmpSel.length ? String(cmpSel.length) : ""; }
+let cmpLayout = "side";
+function cmp3dOff(){ const c3 = document.getElementById("cmp3d"); if (c3) c3.hidden = true; V3.stopCompare(); }
 function renderCompare(){
   const out = document.getElementById("cmp-out"); if (!out) return;
   const R = readInputs();
-  if (checkInputs(R)){ out.innerHTML = `<div class="verdict bad"><span>Önce “Kutu hesabı” sekmesindeki değerleri düzeltin.</span></div>`; return; }
+  if (checkInputs(R)){ cmp3dOff(); out.innerHTML = `<div class="verdict bad"><span>Önce “Kutu hesabı” sekmesindeki değerleri düzeltin.</span></div>`; return; }
   const grids = buildGrids(R), cache = {};
   const items = cmpSel.map(c => { const pl = (cache[c.P] = cache[c.P] || plansFor(R, grids, c.P)).find(p => p.id === c.id); return pl ? {c, pl} : null; }).filter(Boolean);
   cmpSel = items.map(x => x.c); updateCmpBadge();
   if (items.length < 2){
+    cmp3dOff();
     out.innerHTML = `<div class="cmp-empty"><p><b>${items.length ? "Bir plan daha seçin." : "Karşılaştırmak için iki plan seçin."}</b></p>
       <p>“Kutu hesabı” sekmesindeki plan listesinde her satırın başındaki <span class="cmpbtn demo">+</span> düğmesine dokunun. Farklı P'lerden de seçebilirsiniz: önce Paralel (P) listesinden 8P'yi seçip bir plan ekleyin, sonra 9P'ye geçip bir plan daha ekleyin.</p>
       ${items.length ? `<p>Seçili: <b>${escH(items[0].pl.shape)}</b> · ${R.S}S${items[0].c.P}P</p>` : ""}
@@ -3156,7 +3299,22 @@ function renderCompare(){
     document.querySelector('.tabs a[data-page="hesap"]').click();
   });
   out.querySelectorAll("[data-rm]").forEach(b => b.onclick = () => { cmpSel.splice(+b.dataset.rm, 1); updateCmpBadge(); renderCompare(); });
+  // 3D karşılaştırma
+  const c3 = document.getElementById("cmp3d");
+  if (c3 && pageShown("karsilastir")){
+    c3.hidden = false;
+    V3.showCompare(R, A, B, cmpLayout);
+    const h = document.getElementById("cmp3d-hint");
+    if (h) h.innerHTML = cmpLayout === "over"
+      ? `<b>A</b> normal renkte, <b>B</b> turuncu saydam olarak aynı kutuda üst üste: hücrelerin nerede farklı olduğu hemen görünür. Döndürüp yakınlaştırabilirsiniz.`
+      : `Solda <b>A</b>, sağda <b>B</b>; ikisi aynı kutu ölçüsünde. Döndürüp yakınlaştırarak karşılaştırın.`;
+  }
 }
+document.querySelectorAll("#cmp3d-mode button").forEach(b => b.addEventListener("click", () => {
+  cmpLayout = b.dataset.cm;
+  document.querySelectorAll("#cmp3d-mode button").forEach(x => x.classList.toggle("on", x === b));
+  renderCompare();
+}));
 
 /* ---------- Projeler: hesapta (telefon ve bilgisayarda ortak) ya da bu cihazda ---------- */
 const PROJ = (() => {
@@ -3534,6 +3692,7 @@ const MAN = (() => {
     $("man-P").value = st.P || "";
     $("man-auto").checked = !!st.autoNext;
     document.querySelectorAll("#man-tool button").forEach(b => b.classList.toggle("on", b.dataset.tool === st.tool));
+    selBar();
     const chip = $("man-g"); chip.textContent = "S" + st.curG; chip.style.background = gColor(st.curG - 1);
     const lb = $("man-layers");
     if (!grid){ lb.innerHTML = ""; return; }
@@ -3544,7 +3703,7 @@ const MAN = (() => {
     }).join("");
     lb.querySelectorAll("button").forEach(b => b.onclick = () => { st.L = +b.dataset.l; persist(); drawTools(); drawEditor(); });
   }
-  let geom = null;
+  let geom = null, selK = new Set(), selL = -1, selG = "", marq = null, dragSel = null, edBound = false;
   function drawEditor(){
     const box = $("man-editor");
     if (!grid){ box.innerHTML = `<div class="v3d-msg">${probMsg || "Bu hücre yönü ve ızgarada kutuya hücre sığmıyor."}</div>`; geom = null; return; }
@@ -3559,6 +3718,7 @@ const MAN = (() => {
     s += `<rect x="${X(0)}" y="${Y(0)}" width="${grid.a * sc}" height="${grid.b * sc}" fill="none" stroke="var(--muted)" stroke-dasharray="4 3"/>`;
     s += `<text x="${pad + W / 2}" y="${pad + H + 16}" font-size="12" text-anchor="middle" fill="var(--muted)">${DIM_NAMES[o.a]} ${fmt(fullA, 0)} mm</text>`;
     s += `<text x="${pad + W + 16}" y="${pad + H / 2}" font-size="12" text-anchor="middle" fill="var(--muted)" transform="rotate(90 ${pad + W + 16} ${pad + H / 2})">${DIM_NAMES[o.b]} ${fmt(fullB, 0)} mm</text>`;
+    if (selL !== st.L || selG !== gid()){ selK.clear(); selL = st.L; selG = gid(); }   // kat ya da ızgara değişince seçim temizlenir
     grid.cells.forEach(c => {
       const n = lay[ik(c)], cx = X(c.x), cy = Y(c.y);
       if (n){
@@ -3569,37 +3729,131 @@ const MAN = (() => {
         s += `<circle cx="${cx}" cy="${cy}" r="${r - 1}" fill="var(--surface)" stroke="var(--unused)" stroke-dasharray="3 2"/>`;
         if (below[ik(c)]) s += `<text x="${cx}" y="${cy}" font-size="${fs * 0.75}" text-anchor="middle" dominant-baseline="central" fill="var(--muted)" opacity=".55">${below[ik(c)]}</text>`;
       }
+      if (selK.has(ik(c))) s += `<circle cx="${cx}" cy="${cy}" r="${r + 0.6}" fill="rgba(61,107,255,.16)" stroke="#3d6bff" stroke-width="2.6" pointer-events="none"/>`;
     });
     s += `</svg>`;
     box.innerHTML = s;
     $("man-cap").innerHTML = `Kat ${st.L + 1} <span>· ${faceNames(grid.o)[0].toLowerCase()} tarafından · ${DIM_NAMES[o.a]} × ${DIM_NAMES[o.b]}${st.L > 0 ? " · soluk numaralar alttaki kat" : ""}</span>`;
-    bindEditor(box.querySelector("svg"));
+    bindEditor();
   }
-  function bindEditor(svg){
+  // Dokunma / fare olayları ızgaranın kendisine değil, onu tutan kalıcı kutuya (man-editor) bağlanır.
+  // Böylece her hücre boyandığında ya da silindiğinde ızgara yeniden çizilse de parmak ekrandayken işlem kesilmez,
+  // parmak kalkınca da biter (önceden silme yalnız ilk hücrede kalıyor, fare bırakılsa da boyama sürebiliyordu).
+  function bindEditor(){
+    if (edBound) return; edBound = true;
+    const box = $("man-editor");
+    const svgNow = () => box.querySelector("svg");
+    const toSvg = e => { const svg = svgNow(); if (!svg || !geom) return null; const m = svg.getScreenCTM(); if (!m) return null; const pt = svg.createSVGPoint(); pt.x = e.clientX; pt.y = e.clientY; return pt.matrixTransform(m.inverse()); };
     const hit = e => {
-      if (!geom) return null;
-      const pt = svg.createSVGPoint(); pt.x = e.clientX; pt.y = e.clientY;
-      const m = svg.getScreenCTM(); if (!m) return null;
-      const p = pt.matrixTransform(m.inverse());
+      const p = toSvg(e); if (!p || !grid) return null;
       let best = null, bd = Infinity;
       grid.cells.forEach(c => { const d = Math.hypot(geom.X(c.x) - p.x, geom.Y(c.y) - p.y); if (d < bd){ bd = d; best = c; } });
       return bd <= geom.r * 1.08 ? best : null;
     };
-    svg.addEventListener("pointerdown", e => {
-      const c = hit(e); if (!c) return;
-      e.preventDefault(); svg.setPointerCapture && svg.setPointerCapture(e.pointerId);
-      if (st.tool === "move"){ if (moveStart(c)) svg.classList.add("moving"); return; }
+    const capture = e => { try { box.setPointerCapture(e.pointerId); } catch (err) {} };
+    box.addEventListener("pointerdown", e => {
+      if (!svgNow() || !grid || (e.button !== undefined && e.button > 0)) return;
+      const c = hit(e);
+      if (st.tool === "select"){
+        const p = toSvg(e); if (!p) return;
+        e.preventDefault(); capture(e);
+        if (c && selK.has(ik(c))){ dragSel = {from: c}; box.classList.add("moving"); return; }
+        marq = {x0: p.x, y0: p.y, x1: p.x, y1: p.y, c};
+        return;
+      }
+      if (!c) return;
+      e.preventDefault(); capture(e);
+      if (st.tool === "move"){ if (moveStart(c)) box.classList.add("moving"); return; }
       const lay = design()[st.L] || {};
       snap();
       stroke = st.tool === "erase" ? "erase" : (lay[ik(c)] === st.curG ? "remove" : "paint");
       lastK = null; applyAt(c);
     });
-    svg.addEventListener("pointermove", e => { if (!stroke) return; const c = hit(e); if (c) applyAt(c); });
-    const end = e => {
-      if (moveSt){ svg.classList.remove("moving"); moveEnd(e && e.type === "pointerup" ? hit(e) : null); return; }
+    box.addEventListener("pointermove", e => {
+      if (marq){ const p = toSvg(e); if (!p) return; marq.x1 = p.x; marq.y1 = p.y; drawMarq(); return; }
+      if (!stroke) return;
+      const c = hit(e); if (c) applyAt(c);
+    });
+    const finish = (e, okEnd) => {
+      if (marq){ const m = marq; marq = null; const sv = svgNow(), r = sv && sv.querySelector("#man-marq"); if (r) r.remove(); if (okEnd) selectRect(m); return; }
+      if (dragSel){ const d = dragSel; dragSel = null; box.classList.remove("moving"); if (okEnd) moveSel(d.from, hit(e)); return; }
+      if (moveSt){ box.classList.remove("moving"); if (okEnd) moveEnd(hit(e)); else moveSt = null; return; }
       if (stroke){ stroke = null; lastK = null; persist(); }
     };
-    svg.addEventListener("pointerup", end); svg.addEventListener("pointercancel", end); svg.addEventListener("lostpointercapture", () => { if (moveSt){ moveSt = null; svg.classList.remove("moving"); } end(); });
+    box.addEventListener("pointerup", e => finish(e, true));
+    box.addEventListener("pointercancel", e => finish(e, false));
+    box.addEventListener("lostpointercapture", e => finish(e, false));
+  }
+
+  // ---- çoklu seçim: kutu çizerek seç, topluca taşı / sil / gruba ata ----
+  function drawMarq(){
+    const svg = $("man-editor").querySelector("svg"); if (!svg || !marq) return;
+    let r = svg.querySelector("#man-marq");
+    if (!r){
+      r = document.createElementNS("http://www.w3.org/2000/svg", "rect"); r.id = "man-marq";
+      r.setAttribute("fill", "rgba(61,107,255,.14)"); r.setAttribute("stroke", "#3d6bff"); r.setAttribute("stroke-width", "1.5"); r.setAttribute("stroke-dasharray", "5 3"); r.setAttribute("pointer-events", "none");
+      svg.appendChild(r);
+    }
+    r.setAttribute("x", Math.min(marq.x0, marq.x1)); r.setAttribute("y", Math.min(marq.y0, marq.y1));
+    r.setAttribute("width", Math.abs(marq.x1 - marq.x0)); r.setAttribute("height", Math.abs(marq.y1 - marq.y0));
+  }
+  function selectRect(m){
+    if (!grid || !geom) return;
+    if (Math.abs(m.x1 - m.x0) < 6 && Math.abs(m.y1 - m.y0) < 6){
+      // dokunma: tek yuvayı seç ya da seçimden çıkar; boş alana dokunmak seçimi temizler
+      if (m.c){ const k = ik(m.c); if (selK.has(k)) selK.delete(k); else selK.add(k); } else selK.clear();
+    } else {
+      const x0 = Math.min(m.x0, m.x1), x1 = Math.max(m.x0, m.x1), y0 = Math.min(m.y0, m.y1), y1 = Math.max(m.y0, m.y1);
+      selK = new Set(grid.cells.filter(c => { const cx = geom.X(c.x), cy = geom.Y(c.y); return cx >= x0 && cx <= x1 && cy >= y0 && cy <= y1; }).map(ik));
+    }
+    drawEditor(); selBar();
+  }
+  function moveSel(from, to){
+    if (!from || !to) return;
+    const di = to.i - from.i, dj = to.j - from.j; if (!di && !dj) return;
+    const d = design(), lay = d[st.L] = d[st.L] || {}, moving = [...selK].filter(k => lay[k]);
+    if (!moving.length){ flash("Seçimde hücre yok.", true); return; }
+    const tgt = new Map();
+    for (const k of moving){
+      const [i, j] = k.split(",").map(Number), nk = (i + di) + "," + (j + dj);
+      if (!idx.has(nk)){ flash("Seçim oraya sığmıyor (ızgaranın dışına çıkıyor).", true); return; }
+      if (lay[nk] && !selK.has(nk)){ flash(`Seçim oraya taşınamaz: S${lay[nk]} ile çakışıyor.`, true); return; }
+      tgt.set(nk, lay[k]);
+    }
+    snap();
+    moving.forEach(k => delete lay[k]); tgt.forEach((n, k) => { lay[k] = n; });
+    selK = new Set([...selK].map(k => { const [i, j] = k.split(",").map(Number); return (i + di) + "," + (j + dj); }).filter(k => idx.has(k)));
+    persist(); changed(); flash(`${moving.length} hücre taşındı.`);
+  }
+  function selAction(kind){
+    const d = design(), lay = d[st.L] = d[st.L] || {};
+    if (kind === "clear"){ selK.clear(); drawEditor(); selBar(); return; }
+    if (!selK.size) return;
+    if (kind === "del"){
+      const ks = [...selK].filter(k => lay[k]); if (!ks.length){ flash("Seçimde silinecek hücre yok.", true); return; }
+      snap(); ks.forEach(k => delete lay[k]); persist(); changed(); flash(`${ks.length} hücre silindi.`); return;
+    }
+    if (kind === "assign"){
+      const e = groupsInfo().get(st.curG);
+      if (e && !e.Ls.has(st.L)){ flash(`S${st.curG} Kat ${e.L + 1}'de. Bir grup tek katta olmalı; başka bir grup numarası seçin.`, true); return; }
+      snap(); selK.forEach(k => { lay[k] = st.curG; });
+      const n = (groupsInfo().get(st.curG) || {cells: []}).cells.length;
+      persist(); changed();
+      flash(n > st.P ? `S${st.curG} grubunda şimdi ${n} hücre var; P = ${st.P}. Fazla hücreleri kaldırın.` : `Seçili ${selK.size} yuva S${st.curG} grubuna atandı (${n}/${st.P}).`, n > st.P);
+    }
+  }
+  function selBar(){
+    const b = $("man-selbar"); if (!b) return;
+    if (st.tool !== "select"){ b.hidden = true; return; }
+    b.hidden = false;
+    const lay = design()[st.L] || {}, n = selK.size, full = [...selK].filter(k => lay[k]).length;
+    b.innerHTML = n
+      ? `<b>${n} yuva seçili</b><span class="hint">${full} hücre dolu · taşımak için seçili bir hücreyi sürükleyin</span>
+        <button type="button" class="btn primary" data-sel="assign">S${st.curG} grubuna ata</button>
+        <button type="button" class="btn" data-sel="del">Sil</button>
+        <button type="button" class="btn" data-sel="clear">Seçimi kaldır</button>`
+      : `<span class="hint">Seçmek için parmağınızla ya da fareyle bir kutu çizin. Tek yuvaya dokunmak onu seçer ya da seçimden çıkarır.</span>`;
+    b.querySelectorAll("[data-sel]").forEach(x => x.onclick = () => selAction(x.dataset.sel));
   }
   function nextFree(from){
     const info = groupsInfo(); let m = Math.max(1, from);
@@ -3801,7 +4055,18 @@ const MAN = (() => {
     $("man-gminus").addEventListener("click", () => { st.curG = Math.max(1, st.curG - 1); persist(); drawTools(); drawEditor(); });
     $("man-gplus").addEventListener("click", () => { st.curG = Math.min(400, st.curG + 1); persist(); drawTools(); drawEditor(); });
     $("man-gnext").addEventListener("click", () => { st.curG = nextFree(1); persist(); drawTools(); drawEditor(); });
-    document.querySelectorAll("#man-tool button").forEach(b => b.addEventListener("click", () => { st.tool = b.dataset.tool; persist(); drawTools(); }));
+    const TOOL_HINT = {paint: "Boya: yuvalara dokunun ya da parmağınızı sürükleyin; seçili grup yerleşir.", erase: "Sil: silmek istediğiniz hücrelere dokunun ya da üzerlerinden sürükleyin.",
+      move: "Taşı: bir grubun hücresini tutup yeni yerine sürükleyin.", select: "Seç: kutu çizerek birden çok yuva seçin; sonra taşıyın, silin ya da bir gruba atayın."};
+    document.querySelectorAll("#man-tool button").forEach(b => b.addEventListener("click", () => {
+      st.tool = b.dataset.tool; if (st.tool !== "select") selK.clear();
+      persist(); drawTools(); drawEditor(); flash(TOOL_HINT[st.tool] || "");
+    }));
+    // seçim için klavye: Delete siler, Esc seçimi kaldırır
+    document.addEventListener("keydown", e => {
+      if (!pageShown("elle") || st.tool !== "select" || /input|select|textarea/i.test(e.target.tagName || "")) return;
+      if ((e.key === "Delete" || e.key === "Backspace") && selK.size){ e.preventDefault(); selAction("del"); }
+      else if (e.key === "Escape" && selK.size) selAction("clear");
+    });
     $("man-from").addEventListener("click", e => {
       const has = Object.values(design()).some(l => Object.keys(l || {}).length);
       if (has) arm(e.currentTarget, "from", "Tekrar dokunun: mevcut tasarım silinir", fromPlan); else fromPlan();
@@ -4343,7 +4608,7 @@ $("volt").addEventListener("input", autoS);   // hücre voltajını düzeltmek s
 /* ---------- Değerleri hatırla (bu cihazda) ---------- */
 const STORE_KEY = "batarya-hesap-v1";
 let restoreP = null, saveT = 0;
-const TRANSIENT = ["t_wrap", "t_show"];   // bitmiş paket ve vitrin: her açılışta kapalı başlar
+const TRANSIENT = ["t_wrap", "t_show", "t_measure"];   // bitmiş paket ve vitrin: her açılışta kapalı başlar
 function saveState(){
   try {
     const v = {};
@@ -4428,9 +4693,9 @@ function route(want){
   if (ms){ ms.hidden = true; ms.querySelectorAll("a").forEach(a => a.classList.toggle("on", a.getAttribute("href") === "#" + p)); }
   const act = document.querySelector(".tabs a.on"); if (act && act.scrollIntoView) act.scrollIntoView({block: "nearest", inline: "center"});
   if (p === "sema" && detailDirty && lastDetail) renderDetail(...lastDetail);
-  if (p === "karsilastir") renderCompare();
   if (p !== "elle" && V3.isManual()){ if (lastDetail) V3.setPlan(lastDetail[0], lastDetail[1]); else V3.clear(); }   // elle tasarımdan çıkınca seçili plana dön
-  V3.setMode(p === "simulasyon" ? "sim" : p === "elle" ? "man" : "view");
+  V3.setMode(p === "simulasyon" ? "sim" : p === "elle" ? "man" : p === "karsilastir" ? "cmp" : "view");
+  if (p === "karsilastir") renderCompare();
   if (p === "elle") MAN.onShow();
   if (p === "uc-boyut" || p === "simulasyon" || p === "elle") requestAnimationFrame(() => V3.onShow());
   window.scrollTo(0, 0);

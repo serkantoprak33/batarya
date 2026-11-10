@@ -1955,6 +1955,10 @@ const V3 = (() => {
   }
   function startTour(){
     if (!ok || !cur || !A || mode === "sim") return;
+    let rb = false;
+    if (st.wrap){ st.wrap = false; const w = $$("t_wrap"); if (w) w.checked = false; rb = true; }
+    if (st.lid || lidAng < LID_OPEN - 1e-3){ st.lid = false; lidAng = LID_OPEN; const l = $$("t_lid"); if (l) l.checked = false; rb = true; }
+    if (rb) build();
     const F = A.focus, dTop = dirFor("facetop"), side = new THREE.Vector3(1, 0.35, 0.4).normalize();
     const close = dTop.clone().add(side.clone().multiplyScalar(0.6)).normalize();
     const scenes = [
@@ -3803,11 +3807,12 @@ $("volt").addEventListener("input", autoS);   // hücre voltajını düzeltmek s
 /* ---------- Değerleri hatırla (bu cihazda) ---------- */
 const STORE_KEY = "batarya-hesap-v1";
 let restoreP = null, saveT = 0;
+const TRANSIENT = ["t_wrap", "t_show"];   // bitmiş paket ve vitrin: her açılışta kapalı başlar
 function saveState(){
   try {
     const v = {};
     document.querySelectorAll("input[id], select[id]").forEach(el => {
-      if (el.id === "psel" || el.id.startsWith("sim-") || el.id.startsWith("proj-") || el.id.startsWith("man-")) return;
+      if (el.id === "psel" || el.id.startsWith("sim-") || el.id.startsWith("proj-") || el.id.startsWith("man-") || TRANSIENT.includes(el.id)) return;
       v[el.id] = el.type === "checkbox" ? el.checked : el.value;
     });
     v.__P = parseInt($("psel").value) || null;
@@ -3820,7 +3825,7 @@ function loadState(){
   try { v = JSON.parse(localStorage.getItem(STORE_KEY) || "null"); } catch (e) {}
   if (!v || typeof v !== "object") return;
   Object.entries(v).forEach(([id, val]) => {
-    if (id.startsWith("__")) return;
+    if (id.startsWith("__") || TRANSIENT.includes(id)) return;
     const el = document.getElementById(id);
     if (!el) return;
     if (el.type === "checkbox") el.checked = !!val;

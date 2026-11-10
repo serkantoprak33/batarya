@@ -1,5 +1,5 @@
 // Kadro Tasarım — çevrimdışı önbellek (derle.js üretir, elle değiştirmeyin)
-const VER = "batarya-120b14db23";
+const VER = "batarya-2c8f6d7e3a";
 const ASSETS = ["./","index.html","manifest.webmanifest","lib/three.min.js","lib/OrbitControls.js","lib/RGBELoader.js","lib/studio.hdr","lib/fx/shaders/CopyShader.js","lib/fx/postprocessing/EffectComposer.js","lib/fx/postprocessing/RenderPass.js","lib/fx/postprocessing/ShaderPass.js","lib/fx/math/SimplexNoise.js","lib/fx/shaders/SSAOShader.js","lib/fx/postprocessing/SSAOPass.js","lib/fx/shaders/LuminosityHighPassShader.js","lib/fx/postprocessing/UnrealBloomPass.js","lib/fx/shaders/GammaCorrectionShader.js","lib/fx/shaders/FXAAShader.js","simgeler/simge-192.png","simgeler/simge-512.png","simgeler/simge-maskable-512.png","simgeler/apple-touch-icon.png","simgeler/favicon-32.png"];
 const FONTS = "batarya-yazitipi";
 

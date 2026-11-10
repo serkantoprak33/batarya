@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="theme-color" content="#111214">
+<meta name="theme-color" content="#07080c">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Kadro Tasarım">
@@ -15,7 +15,7 @@
 <style>[hidden]{display:none!important}</style>
 <script>window.BATARYA_APP = true; window.BATARYA_HDR = "lib/studio.hdr";</script>
 <style>
-#splash{position:fixed;inset:0;z-index:100;display:grid;place-items:center;background:radial-gradient(90% 70% at 50% 40%,#202226 0%,#111214 70%);transition:opacity .45s ease,visibility .45s}
+#splash{position:fixed;inset:0;z-index:100;display:grid;place-items:center;background:radial-gradient(70% 55% at 50% 42%,#1a2563 0%,#0b0e1a 55%,#07080c 100%);transition:opacity .45s ease,visibility .45s}
 #splash.out{opacity:0;visibility:hidden}
 #splash img{width:132px;height:132px;animation:spl 1.1s ease-out both}
 #splash span{display:block;margin-top:14px;text-align:center;font:700 22px/1 "Barlow Condensed","Arial Narrow",sans-serif;letter-spacing:.14em;color:#e9eef0;text-transform:uppercase;animation:spl 1.1s .12s ease-out both}
@@ -34,22 +34,23 @@
 <style>
 /* Düzen: atölye tezgâhı — solda sabit ölçü föyü, sağda paket etiketi, plan listesi ve montaj şeması.
    Renkler pil atölyesinden: ısıyla daralan PVC mavisi, kapton bandı amberi, nikel grisi, fish-paper kırmızısı. */
-/* Renk paleti: kömür siyahı zemin, royal mavi ana vurgu, mandalina turuncusu ikinci vurgu. Açık tema yalnız data-theme="light" ile. */
+/* Renk paleti (referans görsel): simsiyah zemin, royal mavi ışıltı ve neon çizgiler, mandalina düğmeler. Açık tema yalnız data-theme="light" ile. */
 :root{
-  --bg:#111214; --surface:#18191c; --surface-2:#1f2124; --ink:#eef0f2; --muted:#9a9fa7;
-  --line:#2a2c30; --line-strong:#3a3d42;
-  --accent:#3b6cf6; --accent-ink:#ffffff; --accent-soft:#16224a;
-  --accent2:#ff8a1e; --accent2-ink:#1a0d00; --accent2-soft:#33200c;
-  --kapton:#ff9a3c; --kapton-soft:#33200c;
-  --good:#3fca7d; --good-soft:#11291c; --bad:#ef6a55; --bad-soft:#2e1714;
-  --nickel1:#8d98a3; --nickel2:#bac3cb; --plus:#ff6b5e; --minus:#0e1317; --tap:#ff9a3c;
-  --label-bg:#0b0c0e; --unused:#3b3e43; --box:#a2a7ae; --sel:#16224a;
-  --shadow:0 1px 0 rgba(255,255,255,.035) inset, 0 14px 34px rgba(0,0,0,.34);
+  --bg:#07080c; --surface:#0f111a; --surface-2:#151926; --ink:#f4f6fa; --muted:#9ba4b8;
+  --line:#1e2333; --line-strong:#2c3348;
+  --accent:#ff8f1f; --accent-ink:#170a00; --accent-soft:rgba(255,143,31,.14);
+  --accent2:#3d6bff; --accent2-ink:#ffffff; --accent2-soft:rgba(61,107,255,.16);
+  --glow:#3d6bff;
+  --kapton:#ffa040; --kapton-soft:#2b1b0b;
+  --good:#3fca7d; --good-soft:#0f2519; --bad:#ff6a55; --bad-soft:#2c1312;
+  --nickel1:#8d98a3; --nickel2:#bac3cb; --plus:#ff6b5e; --minus:#0e1317; --tap:#ffa040;
+  --label-bg:#07080c; --unused:#323a52; --box:#9fb0d8; --sel:rgba(61,107,255,.12);
+  --shadow:0 0 0 1px rgba(255,255,255,.015) inset, 0 22px 50px rgba(0,0,0,.5);
   --text:var(--ink); --panel:var(--surface);
   --f-display:"Barlow Condensed","Arial Narrow","Roboto Condensed",sans-serif;
   --f-body:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
   --f-mono:"IBM Plex Mono",ui-monospace,"Cascadia Mono",Consolas,monospace;
-  --r:14px;
+  --r:18px;
   color-scheme:dark;
 }
 :root[data-theme="light"]{
@@ -421,8 +422,74 @@ label.chip{background:none;padding:0;border-radius:999px;font:inherit}
 @keyframes shimmer{to{background-position:-250% 0}}
 .pill.hot{background:var(--accent2-soft);color:var(--accent2)}
 @media (prefers-reduced-motion: reduce){ *{transition:none!important;animation:none!important} }
+/* ===== Premium görünüm (referans: siyah zemin, royal mavi ışıltı, neon çizgi, mandalina düğme, büyük yoğun başlıklar) ===== */
+body{background:#07080c}
+.glowbg{position:fixed;inset:0;z-index:-1;pointer-events:none;overflow:hidden;
+  background:radial-gradient(55% 45% at 4% 0%, rgba(43,76,235,.34), transparent 70%),
+    radial-gradient(45% 40% at 100% 22%, rgba(43,76,235,.24), transparent 70%),
+    radial-gradient(70% 45% at 50% 108%, rgba(30,52,190,.30), transparent 72%), #07080c}
+.glowbg svg{position:absolute;inset:0;width:100%;height:100%}
+.glowbg path{fill:none;stroke:#3d6bff;vector-effect:non-scaling-stroke}
+.glowbg .n1{stroke-width:2;opacity:.75}
+.glowbg .n2{stroke-width:10;opacity:.16;filter:blur(6px)}
+.glowbg .n3{stroke-width:1.5;opacity:.28}
+/* üst bar ve sekmeler: saydam, ince çizgi */
+.bar{background:transparent;border-bottom:0}
+.brand-name{font-size:27px;letter-spacing:.02em}
+#barchip{background:var(--accent);color:var(--accent-ink);font:700 13px/1 var(--f-mono);padding:10px 16px;border-radius:999px;box-shadow:0 8px 24px rgba(255,143,31,.28)}
+.tabs{background:rgba(7,8,12,.72);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);border-bottom:1px solid rgba(255,255,255,.06)}
+.tabs a{color:#aab2c4;border-radius:10px}
+.tabs a:hover{background:rgba(255,255,255,.04);color:#fff}
+.tabs a.on{background:transparent;color:#fff;box-shadow:inset 0 -2px 0 var(--accent)}
+body::before{background:#07080c}
+/* kartlar: koyu cam, ince mavi kenar */
+.sheet,.block,.plate,.lpick,.planbar,.golinks a{background:linear-gradient(180deg, rgba(21,25,40,.86), rgba(11,13,20,.9));border:1px solid rgba(130,150,255,.11);box-shadow:var(--shadow)}
+.calc{background:rgba(255,255,255,.025);border-color:rgba(130,150,255,.10)}
+.grp{border-top-color:rgba(255,255,255,.06)}
+.bhead h2{font-size:30px;font-weight:700;letter-spacing:.02em;color:#fff}
+.grp h2,details.grp>summary{color:#fff;letter-spacing:.1em}
+.dtitle{font-size:40px;color:#fff}
+.plate-top{background:linear-gradient(90deg,#2d54ee 0%,#1c34a8 55%,#141f5e 100%);color:#fff}
+.cfg{text-shadow:0 0 28px rgba(61,107,255,.25)}
+.cfg .p{color:var(--accent);text-shadow:0 0 26px rgba(255,143,31,.35)}
+.kv>div{border-left-color:rgba(255,255,255,.08)}
+/* düğmeler: mandalina ana, diğerleri koyu cam */
+.btn{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.12);border-radius:10px;color:#eef1f6}
+.btn:hover:not(:disabled){border-color:var(--glow);box-shadow:0 0 0 1px rgba(61,107,255,.35),0 0 18px rgba(61,107,255,.25)}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink);box-shadow:0 8px 24px rgba(255,143,31,.28)}
+.btn.primary:hover:not(:disabled){border-color:#ffb066;box-shadow:0 10px 28px rgba(255,143,31,.4)}
+.seg{border-color:rgba(255,255,255,.12);border-radius:10px}
+.seg button{background:rgba(255,255,255,.03);color:#d7dce6}
+.seg button.on{background:var(--accent);color:var(--accent-ink)}
+/* seçili çipler ve seçimler: royal mavi neon */
+.chip span{background:rgba(255,255,255,.035);border-color:rgba(255,255,255,.1);color:#aab2c4}
+.chip input:checked + span{background:rgba(61,107,255,.16);border-color:var(--glow);color:#e3e9ff;box-shadow:0 0 14px rgba(61,107,255,.35)}
+.chip input:checked + span::before{background:#7fa0ff;box-shadow:0 0 8px #3d6bff}
+.lp-opt{background:rgba(255,255,255,.03);border-color:rgba(255,255,255,.1)}
+.lp-opt.on{background:rgba(61,107,255,.12);border-color:var(--glow);box-shadow:0 0 0 1px var(--glow),0 0 26px rgba(61,107,255,.3)}
+.plans tbody tr.sel{background:rgba(61,107,255,.10)}
+.plans tbody tr.sel td:first-child{box-shadow:inset 3px 0 0 var(--accent)}
+.sel .rank{color:var(--accent)}
+.pill.hot{background:var(--accent-soft);color:var(--accent)}
+/* girişler */
+.inp,select{background:rgba(255,255,255,.035);border-color:rgba(255,255,255,.09)}
+.inp:focus-within,select:focus{border-color:var(--glow);box-shadow:0 0 0 3px rgba(61,107,255,.22)}
+.planbar a,.golinks a{color:var(--accent)}
+.golinks a:hover{border-color:var(--glow);background:rgba(61,107,255,.10)}
+.sim-now{background:rgba(61,107,255,.10);border-color:var(--glow)}
+.verdict.good{background:rgba(63,202,125,.10)}
+/* 3D sahnesi: üstten mavi ışıltılı derin siyah */
+.v3d{background:radial-gradient(120% 95% at 50% 6%, #18225a 0%, #0b0e1a 52%, #07080c 100%);border-color:rgba(130,150,255,.14)}
+@media (max-width:760px){
+  .tabs{background:rgba(9,10,15,.92);border-top:1px solid rgba(130,150,255,.14)}
+  .tabs a.on,.more-btn.on{color:var(--accent);background:var(--accent-soft);box-shadow:none}
+  .bhead h2{font-size:25px}
+  .glowbg .n2{opacity:.12}
+}
+
 </style>
 
+<div class="glowbg" aria-hidden="true"><svg viewBox="0 0 1440 900" preserveAspectRatio="none"><path class="n2" d="M-60 760 C 260 940, 470 210, 760 360 S 1250 820, 1500 150"/><path class="n1" d="M-60 760 C 260 940, 470 210, 760 360 S 1250 820, 1500 150"/><path class="n3" d="M-80 230 C 300 120, 640 520, 980 470 S 1360 260, 1520 330"/></svg></div>
 <header class="bar" lang="tr">
   <div class="wrap">
     <div class="brand">
@@ -959,7 +1026,7 @@ const V3 = (() => {
   function stageTexture(){
     const cv = document.createElement("canvas"); cv.width = 512; cv.height = 320;
     const x = cv.getContext("2d"), g = x.createRadialGradient(256, 58, 20, 256, 140, 330);
-    g.addColorStop(0, "#2f3237"); g.addColorStop(0.58, "#17181b"); g.addColorStop(1, "#0e0f11"); x.fillStyle = g; x.fillRect(0, 0, 512, 320);
+    g.addColorStop(0, "#18225a"); g.addColorStop(0.52, "#0b0e1a"); g.addColorStop(1, "#07080c"); x.fillStyle = g; x.fillRect(0, 0, 512, 320);
     const t = new THREE.CanvasTexture(cv); t.encoding = THREE.sRGBEncoding; return t;
   }
   async function setupFX(){
@@ -1835,7 +1902,7 @@ const V3 = (() => {
       sc.left = -diag * 0.8; sc.right = diag * 0.8; sc.top = diag * 0.8; sc.bottom = -diag * 0.8; sc.near = diag * 0.2; sc.far = diag * 3.5;
       sc.updateProjectionMatrix();
       const gy = -B.H / 2 - (st.walls ? Math.max(2, Math.min(5, diag * 0.006)) : 0) - 0.6;   // duvar açıkken zemin alt duvarın altında
-      const floor = new THREE.Mesh(new THREE.CircleGeometry(diag * 1.6, 72), new THREE.MeshBasicMaterial({map: floorTexture("#2c343c"), transparent: true, depthWrite: false}));
+      const floor = new THREE.Mesh(new THREE.CircleGeometry(diag * 1.6, 72), new THREE.MeshBasicMaterial({map: floorTexture("#161c33"), transparent: true, depthWrite: false}));
       floor.rotation.x = -Math.PI / 2; floor.position.y = gy - 0.3; pack.add(floor);
       const fw = (st.walls ? B.L : pmax.x - pmin.x) * 1.5, fd = (st.walls ? B.W : pmax.z - pmin.z) * 1.6;
       const blob = new THREE.Mesh(new THREE.PlaneGeometry(fw, fd), new THREE.MeshBasicMaterial({map: contactTexture(), transparent: true, depthWrite: false}));
@@ -2104,7 +2171,7 @@ const V3 = (() => {
       const cv = document.createElement("canvas"); cv.width = W; cv.height = H + band;
       const g = cv.getContext("2d");
       const bg = g.createRadialGradient(W / 2, H * 0.22, W * 0.05, W / 2, H * 0.45, W * 0.8);
-      bg.addColorStop(0, "#2f3237"); bg.addColorStop(1, "#0e0f11"); g.fillStyle = bg; g.fillRect(0, 0, W, H);
+      bg.addColorStop(0, "#18225a"); bg.addColorStop(1, "#07080c"); g.fillStyle = bg; g.fillRect(0, 0, W, H);
       g.drawImage(renderer.domElement, 0, 0, W, H);
       renderer.setPixelRatio(pr); renderer.setSize(sz.x, sz.y, false); camera.aspect = asp; camera.updateProjectionMatrix(); needs = true;
       // alt bilgi şeridi

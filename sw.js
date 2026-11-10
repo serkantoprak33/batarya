@@ -1,5 +1,5 @@
-// Batarya Kutusu Hesaplayıcı — çevrimdışı önbellek (derle.js üretir, elle değiştirmeyin)
-const VER = "batarya-96f741a3b7";
+// Kadro Tasarım — çevrimdışı önbellek (derle.js üretir, elle değiştirmeyin)
+const VER = "batarya-26cb41c795";
 const ASSETS = ["./","index.html","manifest.webmanifest","lib/three.min.js","lib/OrbitControls.js","simgeler/simge-192.png","simgeler/simge-512.png","simgeler/simge-maskable-512.png","simgeler/apple-touch-icon.png","simgeler/favicon-32.png"];
 const FONTS = "batarya-yazitipi";
 

@@ -1,6 +1,7 @@
 <!doctype html>
 <html lang="tr">
 <head>
+<meta name="app-ver" content="a295ae745a">
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#07080c">
@@ -15,6 +16,8 @@
 <style>[hidden]{display:none!important}</style>
 <script>window.BATARYA_APP = true; window.BATARYA_HDR = "lib/studio.hdr";</script>
 <style>
+#upd-toast{position:fixed;left:50%;bottom:calc(84px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);z-index:90;display:flex;align-items:center;gap:12px;padding:10px 12px 10px 16px;border-radius:14px;background:#151926;border:1px solid rgba(61,107,255,.5);box-shadow:0 0 24px rgba(61,107,255,.3);color:#f4f6fa;font:600 14px "IBM Plex Sans",sans-serif;white-space:nowrap}
+#upd-toast button{border:0;border-radius:9px;padding:8px 14px;background:#ff8f1f;color:#170a00;font:700 14px "IBM Plex Sans",sans-serif;cursor:pointer}
 #splash{position:fixed;inset:0;z-index:100;display:grid;place-items:center;background:radial-gradient(70% 55% at 50% 42%,#1a2563 0%,#0b0e1a 55%,#07080c 100%);transition:opacity .45s ease,visibility .45s}
 #splash.out{opacity:0;visibility:hidden}
 #splash img{width:132px;height:132px;animation:spl 1.1s ease-out both}
@@ -372,6 +375,9 @@ label.chip{background:none;padding:0;border-radius:999px;font:inherit}
 .checks li.info::before{content:"i";background:var(--accent-soft);color:var(--accent)}
 .man-tools .trow .btn{padding:7px 12px;font-size:13px}
 .man-tools .field.inline .inp{width:118px}
+.man-tools .tpl-name{min-width:200px;flex:1 1 220px;max-width:340px}
+.man-tools .tpl-name input{font-family:var(--f-body);font-size:14px}
+.man-editor svg.moving{cursor:grabbing}
 .btn.armed{border-color:var(--bad);color:var(--bad);background:var(--bad-soft)}
 .v3d-cap{position:absolute;left:16px;bottom:16px;z-index:2;padding:9px 16px 9px 14px;border-left:3px solid var(--accent2);border-radius:0 10px 10px 0;background:rgba(10,11,13,.72);color:#fff;font:700 clamp(16px,2.4vw,22px)/1.1 var(--f-display);letter-spacing:.06em;text-transform:uppercase;opacity:0;transform:translateY(8px);transition:opacity .35s,transform .35s;pointer-events:none}
 .v3d-cap.on{opacity:1;transform:none}
@@ -422,6 +428,69 @@ label.chip{background:none;padding:0;border-radius:999px;font:inherit}
 @keyframes shimmer{to{background-position:-250% 0}}
 .pill.hot{background:var(--accent2-soft);color:var(--accent2)}
 @media (prefers-reduced-motion: reduce){ *{transition:none!important;animation:none!important} }
+/* AR penceresi */
+#ar-modal{position:fixed;inset:0;z-index:250;display:grid;place-items:center;padding:16px;background:rgba(4,5,9,.78);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px)}
+#ar-modal .ar-box{width:min(920px,100%);max-height:100%;display:grid;grid-template-rows:auto minmax(0,1fr) auto;gap:10px;padding:14px;border-radius:18px;background:linear-gradient(180deg,#151a2b,#0b0d15);border:1px solid rgba(61,107,255,.35);box-shadow:0 0 40px rgba(61,107,255,.25)}
+#ar-modal .ar-top{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+#ar-modal .ar-top b{font:700 20px var(--f-display);letter-spacing:.06em;text-transform:uppercase}
+#ar-modal .ar-top span{flex:1;color:var(--muted);font:500 13px var(--f-mono)}
+#ar-modal .ar-stage{height:min(62vh,560px);border-radius:14px;overflow:hidden;background:radial-gradient(120% 95% at 50% 6%,#18225a 0%,#0b0e1a 52%,#07080c 100%);position:relative}
+#ar-modal model-viewer{width:100%;height:100%;--poster-color:transparent}
+#ar-modal .ar-wait{display:grid;place-items:center;height:100%;color:#9aa3b8;font:600 14px var(--f-body)}
+#ar-modal .ar-go{position:absolute;left:50%;bottom:16px;transform:translateX(-50%);font-size:16px;padding:12px 22px}
+#ar-modal .ar-help{font-size:13px;line-height:1.5;color:#aab2c4}
+.btn.shot.ar{border-color:rgba(61,107,255,.6);box-shadow:0 0 14px rgba(61,107,255,.25)}
+/* belge düğmeleri */
+.doc-actions{display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px;margin-bottom:16px}
+.doc-actions .btn{display:inline-flex;align-items:center;gap:8px}
+.doc-actions .btn svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.6;stroke-linejoin:round}
+/* yazdırma önizlemesi */
+#printroot{display:none}
+body.printing{overflow:hidden}
+body.printing #printroot{display:block;position:fixed;inset:0;z-index:300;overflow:auto;background:#1b1e26;-webkit-overflow-scrolling:touch}
+#printroot .pbar{position:sticky;top:0;z-index:2;display:flex;flex-wrap:wrap;align-items:center;gap:8px 14px;padding:12px 16px;background:rgba(10,11,16,.95);border-bottom:1px solid rgba(130,150,255,.2);color:#fff}
+#printroot .pbar .hint{flex:1 1 260px}
+#printroot .pp-pages{padding:20px 12px 60px}
+.pp{width:190mm;min-height:277mm;margin:0 auto 18px;padding:0;background:#fff;color:#111;font:11px/1.4 Arial,"Helvetica Neue",sans-serif;box-shadow:0 10px 40px rgba(0,0,0,.5);position:relative;overflow:hidden;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+.pp-head{display:grid;grid-template-columns:auto auto 1fr auto;align-items:center;gap:8px 12px;padding:4mm 4mm 3mm;border-bottom:.6mm solid #111}
+.pp-logo{width:11mm;height:11mm}
+.pp-brand{font:700 15px/1 "Barlow Condensed","Arial Narrow",Arial,sans-serif;letter-spacing:.06em;text-transform:uppercase}
+.pp-title{font:700 17px/1.1 "Barlow Condensed","Arial Narrow",Arial,sans-serif;text-transform:uppercase;border-left:.5mm solid #ff8f1f;padding-left:3mm}
+.pp-title small{display:block;font:400 10px/1.3 Arial,sans-serif;text-transform:none;color:#444;margin-top:1mm}
+.pp-meta{text-align:right;font-size:9.5px;color:#333}
+.pp-ruler{display:flex;align-items:center;gap:3mm;padding:2mm 4mm 0;font-size:9px;color:#333}
+.pp-draw{margin:2mm 0 0}
+.pp-draw svg{display:block}
+.pp-legend{padding:2mm 4mm;font-size:9px;color:#333;display:flex;flex-wrap:wrap;align-items:center;gap:1mm 3mm}
+.pp-legend .lg{display:inline-grid;place-items:center;width:4.5mm;height:4.5mm;border-radius:50%;border:.3mm solid #111;font-weight:700}
+.pp-legend .lg.p{background:#ffe6d2;color:#c0390b}.pp-legend .lg.m{background:#e3e9f8;color:#1d3fae}.pp-legend .lg.e{border-style:dashed;border-color:#999}
+.pp-note{padding:1mm 4mm;font-size:9px;color:#a04d00}
+.pp.tech .pp-frame{margin:3mm 4mm;border:.3mm solid #111;height:150mm;display:grid;place-items:center;overflow:hidden}
+.pp-render{max-width:100%;max-height:100%;display:block}
+.pp-cols{display:grid;grid-template-columns:1fr 70mm;gap:4mm;padding:0 4mm 4mm;align-items:end}
+.pp-kv{border-collapse:collapse;width:100%;font-size:10px}
+.pp-kv th,.pp-kv td,.pp-tb td{border:.25mm solid #111;padding:1.2mm 2mm;text-align:left;white-space:normal;color:#111;font:inherit;letter-spacing:0;text-transform:none}
+.pp-kv th{width:32mm;background:#f2f4f8;font-weight:700}
+.pp-tb{border-collapse:collapse;width:100%;font-size:9.5px}
+.pp-tb td:first-child{width:16mm;font-weight:700;background:#f2f4f8}
+.pp-tb .tb-b{background:#111!important;color:#fff!important;font:700 13px "Barlow Condensed",Arial,sans-serif!important;letter-spacing:.06em;text-transform:uppercase!important;display:flex;align-items:center;gap:2mm}
+.pp-tb .tb-b .pp-logo{width:7mm;height:7mm}
+.pp-views{display:flex;flex-wrap:wrap;gap:4mm;padding:3mm 4mm}
+.pp-fig{margin:0}.pp-fig figcaption{font-size:9px;font-weight:700;margin-bottom:1mm}
+.pp-h4{margin:2mm 4mm 1mm;font:700 13px "Barlow Condensed",Arial,sans-serif;text-transform:uppercase;letter-spacing:.06em}
+.pp .mats{display:grid;grid-template-columns:1fr 1fr;gap:1mm 4mm;margin:0 4mm 3mm;padding:0;list-style:none}
+.pp .mats li{border:0;border-bottom:.2mm solid #ccc;background:none;padding:1mm 0;font-size:9.5px;color:#111;border-radius:0}
+.pp .mats li b{display:inline;color:#111;font:700 9.5px Arial,sans-serif;letter-spacing:0;text-transform:none;margin-right:2mm}
+@media print{
+  @page{size:A4 portrait;margin:10mm}
+  body.printing{background:#fff!important;padding:0!important;overflow:visible}
+  body.printing > *:not(#printroot){display:none!important}
+  body.printing #printroot{position:static;display:block;overflow:visible;background:none}
+  #printroot .pbar{display:none}
+  #printroot .pp-pages{padding:0}
+  .pp{box-shadow:none;margin:0;page-break-after:always;break-after:page}
+  .pp:last-child{page-break-after:auto;break-after:auto}
+}
 /* ===== Premium görünüm (referans: siyah zemin, royal mavi ışıltı, neon çizgi, mandalina düğme, büyük yoğun başlıklar) ===== */
 body{background:#07080c}
 .glowbg{position:fixed;inset:0;z-index:-1;pointer-events:none;overflow:hidden;
@@ -699,6 +768,7 @@ body::before{background:#07080c}
         <label class="rng" for="t_explode">Katları ayır <input type="range" id="t_explode" min="0" max="100" value="0"></label>
         <button type="button" class="btn shot" id="t_tour"><svg viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="10" r="7.5"/><path d="M8.3 6.8l4.6 3.2-4.6 3.2z"/></svg>Tanıtım</button>
         <label class="chip" for="t_show"><input type="checkbox" id="t_show"><span>Vitrin (döndür)</span></label>
+        <button type="button" class="btn shot ar" id="t_ar"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M10 2.5l6.5 3.7v7.6L10 17.5l-6.5-3.7V6.2z"/><path d="M3.5 6.2L10 10l6.5-3.8M10 10v7.5"/></svg>AR'da gör</button>
         <button type="button" class="btn shot" id="t_shot"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M3 6.5h3l1.5-2h5l1.5 2h3v9H3z"/><circle cx="10" cy="11" r="3"/></svg>Görsel kaydet</button>
         <label class="field inline" for="t_quality"><span class="lbl">Kalite</span>
           <select id="t_quality" class="mini"><option value="auto" selected>Otomatik</option><option value="high">Yüksek</option><option value="fast">Hızlı</option></select></label>
@@ -840,6 +910,7 @@ body::before{background:#07080c}
         <div class="seg" role="group" aria-label="Araç" id="man-tool">
           <button type="button" data-tool="paint" class="on">Boya</button>
           <button type="button" data-tool="erase">Sil</button>
+          <button type="button" data-tool="move">Taşı</button>
         </div>
         <label class="chip" for="man-auto"><input type="checkbox" id="man-auto" checked><span>Grup dolunca sonrakine geç</span></label>
       </div>
@@ -847,6 +918,25 @@ body::before{background:#07080c}
         <button type="button" class="btn" id="man-from">Seçili plandan başlat</button>
         <button type="button" class="btn" id="man-clearL">Bu katı temizle</button>
         <button type="button" class="btn" id="man-clearA">Hepsini temizle</button>
+        <button type="button" class="btn" id="man-undo" title="Geri al (Ctrl+Z)">↶ Geri al</button>
+        <button type="button" class="btn" id="man-redo" title="İleri al (Ctrl+Y)">↷ İleri al</button>
+      </div>
+      <div class="trow">
+        <span class="tlabel">Bu kat</span>
+        <button type="button" class="btn" id="man-flipH" title="Katı soldan sağa aynala">⇋ Yatay aynala</button>
+        <button type="button" class="btn" id="man-flipV" title="Katı yukarıdan aşağıya aynala">⇵ Dikey aynala</button>
+        <button type="button" class="btn" id="man-rot" title="Katı 180° döndür">⟲ 180° döndür</button>
+        <button type="button" class="btn" id="man-copyL" title="Bu katı bir sonraki kata kopyala (grup numaraları devam eder)">⧉ Sonraki kata kopyala</button>
+      </div>
+      <div class="trow tpl-row">
+        <span class="tlabel">Şablonlar</span>
+        <label class="field inline" for="man-tsel"><span class="lbl">Kayıtlı</span><select id="man-tsel" class="mini"><option value="">— Şablon yok —</option></select></label>
+        <span class="inp tpl-name"><input id="man-tname" type="text" autocomplete="off" maxlength="60" placeholder="Şablon adı (ör. 36V 10S4P scooter)"></span>
+        <button type="button" class="btn primary" id="man-tsave">Şablon olarak kaydet</button>
+        <button type="button" class="btn" id="man-tdel">Sil</button>
+        <button type="button" class="btn" id="man-tshare">Paylaş</button>
+        <button type="button" class="btn" id="man-timport">Dosyadan al</button>
+        <input type="file" id="man-tfile" accept=".json,application/json" hidden>
       </div>
     </div>
     <div class="man-grid">
@@ -1530,7 +1620,7 @@ const V3 = (() => {
       mk(new THREE.CylinderGeometry(1, 1, 1, seg), metal(), pads, shadows);
       mk(new THREE.BoxGeometry(1, 1, 1), metal(), bridges, shadows);
       // çok büyük paketlerde telefonda punta izlerini atla (görüntü aynı kalır, hız korunur)
-      if (!(isMobile && dots.length > 3000)) mk(new THREE.CylinderGeometry(1, 1, 1, 8), mat({color: 0x4a4f55, roughness: 0.75, metalness: 0.3}), dots, false);
+      if (!(isMobile && dots.length > 3000)){ const dm = mat({color: 0x4a4f55, roughness: 0.75, metalness: 0.3}); dm.userData.noAR = true; mk(new THREE.CylinderGeometry(1, 1, 1, 8), dm, dots, false); }
     }
 
     // paketin kenarları (bara ve kablolar kenardan dolaşsın)
@@ -2207,9 +2297,88 @@ const V3 = (() => {
     } catch (e){ btn.lastChild.textContent = "Kaydedilemedi"; }
     setTimeout(() => { btn.lastChild.textContent = old; btn.disabled = false; }, 1800);
   }
+  // teknik çizim görseli: katlar ayrılmış (patlatılmış), etiketli, beyaz zeminde; ayarlar sonra eski hâline döner
+  function renderImage(o){
+    if (!cur || !init()) return null;
+    const keep = {explode: st.explode, labels: st.labels, wrap: st.wrap, ground: st.ground, walls: st.walls, lid: st.lid, cut: st.cut, solo: st.solo, heat: st.heat, flow: st.flow, dims: st.dims, taps: st.taps, harness: st.harness};
+    const camP = camera.position.clone(), camT = controls.target.clone(), camN = camera.near, camF = camera.far, md = mode, bgk = scene.background, wasTour = tour, wasFly = fly;
+    tour = null; fly = null; mode = "view";
+    Object.assign(st, {explode: o.explode, labels: true, wrap: false, ground: false, walls: false, lid: false, cut: false, solo: false, heat: false, flow: false, dims: false, taps: false, harness: false});
+    lidAng = LID_OPEN;
+    let url = null;
+    try {
+      build();
+      scene.background = new THREE.Color(0xffffff);
+      const W = o.w || 2000, H = o.h || 1250, pr = renderer.getPixelRatio(), sz = renderer.getSize(new THREE.Vector2()), asp = camera.aspect;
+      renderer.setPixelRatio(1); renderer.setSize(W, H, false); camera.aspect = W / H; camera.updateProjectionMatrix();
+      // patlatılmış paketin gerçek sınırlarına göre çerçevele (taşmasın)
+      const bb = new THREE.Box3();
+      (A && A.cells || []).forEach(it => bb.expandByPoint(it.body));
+      if (A && A.focus && A.focus.bms) bb.expandByPoint(A.focus.bms);
+      if (bb.isEmpty()) flyTo(dirFor("iso"), o.k || 0.78, true);
+      else {
+        bb.expandByScalar(Math.max(cur.R.len, cur.R.d) * 0.45);
+        const sph = bb.getBoundingSphere(new THREE.Sphere()), fv = camera.fov * Math.PI / 180, fh = 2 * Math.atan(Math.tan(fv / 2) * camera.aspect);
+        const dist = sph.radius / Math.sin(Math.min(fv, fh) / 2) * 0.74;
+        camera.near = dist / 100; camera.far = dist * 10; camera.updateProjectionMatrix();
+        controls.target.copy(sph.center); camera.position.copy(sph.center.clone().add(dirFor("iso").multiplyScalar(dist))); controls.update();
+      }
+      renderer.render(scene, camera);
+      url = renderer.domElement.toDataURL("image/png");
+      renderer.setPixelRatio(pr); renderer.setSize(sz.x, sz.y, false); camera.aspect = asp; camera.updateProjectionMatrix();
+    } catch (e){ url = null; }
+    Object.assign(st, keep); scene.background = bgk; mode = md;
+    build(); camera.near = camN; camera.far = camF; camera.updateProjectionMatrix(); camera.position.copy(camP); controls.target.copy(camT); controls.update(); fly = wasFly; needs = true;
+    if (wasTour) stopTour();
+    return url;
+  }
+  // AR: paketin şu anki görünümünü (bitmiş paket dahil) tek parça GLB modele çevirir; yazılar ve saydam yüzeyler alınmaz
+  function exportGLB(){
+    return new Promise((resolve, reject) => {
+      if (!cur || !init() || !THREE.GLTFExporter || !THREE.BufferGeometryUtils) return reject(new Error("hazır değil"));
+      if (!pack) build();
+      pack.updateMatrixWorld(true);
+      const buckets = new Map(), m4 = new THREE.Matrix4(), col = new THREE.Color();
+      const addGeo = (g, mat, color) => {
+        ["uv2", "skinIndex", "skinWeight"].forEach(a => g.attributes[a] && g.deleteAttribute(a));
+        if (!g.attributes.uv){ g.setAttribute("uv", new THREE.Float32BufferAttribute(new Float32Array(g.attributes.position.count * 2), 2)); }
+        const k = mat.uuid; if (!buckets.has(k)) buckets.set(k, {mat, geos: [], cols: [], tint: false});
+        const b = buckets.get(k); b.geos.push(g); b.cols.push(color.clone());
+        if (Math.abs(color.r - 1) + Math.abs(color.g - 1) + Math.abs(color.b - 1) > 0.01) b.tint = true;
+      };
+      pack.traverse(o => {
+        if (!o.isMesh || !o.visible) return;
+        const mats = Array.isArray(o.material) ? o.material : [o.material], mat = mats[0];
+        if (!mat || mat.userData.noAR || mat.isShadowMaterial || mat.isMeshBasicMaterial || (mat.transparent && mat.opacity < 0.6)) return;
+        if (o.isInstancedMesh){
+          for (let i = 0; i < o.count; i++){
+            o.getMatrixAt(i, m4); if (m4.elements[0] === 0 && m4.elements[5] === 0 && m4.elements[10] === 0) continue;   // gizli örnek
+            const g = o.geometry.clone(); g.applyMatrix4(m4.clone().premultiply(o.matrixWorld));
+            if (o.instanceColor){ col.fromArray(o.instanceColor.array, i * 3); } else col.setRGB(1, 1, 1);
+            addGeo(g, mat, col);
+          }
+        } else { const g = o.geometry.clone(); g.applyMatrix4(o.matrixWorld); addGeo(g, mat, col.setRGB(1, 1, 1)); }
+      });
+      const root = new THREE.Group(), box = new THREE.Box3();
+      buckets.forEach(({mat, geos, cols, tint}) => {
+        // indeksli ve indekssiz parçalar karışıksa hepsi indekssiz yapılır (birleştirme için)
+        if (geos.some(g => g.index) && geos.some(g => !g.index)) geos = geos.map(g => g.index ? g.toNonIndexed() : g);
+        if (tint) geos.forEach((g, i) => { const n = g.attributes.position.count, c = new Float32Array(n * 3), cl = cols[i]; for (let j = 0; j < n; j++){ c[j * 3] = cl.r; c[j * 3 + 1] = cl.g; c[j * 3 + 2] = cl.b; } g.setAttribute("color", new THREE.Float32BufferAttribute(c, 3)); });
+        const merged = THREE.BufferGeometryUtils.mergeBufferGeometries(geos, false); if (!merged) return;
+        const m = new THREE.MeshStandardMaterial({color: mat.color ? mat.color.clone() : 0xffffff, map: mat.map || null, roughness: mat.roughness != null ? mat.roughness : 0.5, metalness: mat.metalness || 0, vertexColors: tint, side: mat.side});
+        root.add(new THREE.Mesh(merged, m));
+      });
+      box.setFromObject(root);
+      // gerçek boyut: mm → metre; model yere otursun ve ortalansın
+      const ctr = box.getCenter(new THREE.Vector3());
+      root.children.forEach(m => m.geometry.translate(-ctr.x, -box.min.y, -ctr.z));
+      root.scale.setScalar(0.001);
+      new THREE.GLTFExporter().parse(root, res => resolve(new Blob([res], {type: "model/gltf-binary"})), {binary: true, onlyVisible: true, maxTextureSize: 1024});
+    });
+  }
   function setPlan(R, pl){ cur = {R, pl}; dirty = true; }
   const isManual = () => !!(cur && cur.pl && cur.pl.manual);
-  return {show, clear, bindUI, setView, setMode, onShow, setPlan, isManual};
+  return {show, clear, bindUI, setView, setMode, onShow, setPlan, isManual, renderImage, exportGLB};
 })();
 </script>
 <script>
@@ -3419,13 +3588,18 @@ const MAN = (() => {
     svg.addEventListener("pointerdown", e => {
       const c = hit(e); if (!c) return;
       e.preventDefault(); svg.setPointerCapture && svg.setPointerCapture(e.pointerId);
+      if (st.tool === "move"){ if (moveStart(c)) svg.classList.add("moving"); return; }
       const lay = design()[st.L] || {};
+      snap();
       stroke = st.tool === "erase" ? "erase" : (lay[ik(c)] === st.curG ? "remove" : "paint");
       lastK = null; applyAt(c);
     });
     svg.addEventListener("pointermove", e => { if (!stroke) return; const c = hit(e); if (c) applyAt(c); });
-    const end = () => { if (stroke){ stroke = null; lastK = null; persist(); } };
-    svg.addEventListener("pointerup", end); svg.addEventListener("pointercancel", end); svg.addEventListener("lostpointercapture", end);
+    const end = e => {
+      if (moveSt){ svg.classList.remove("moving"); moveEnd(e && e.type === "pointerup" ? hit(e) : null); return; }
+      if (stroke){ stroke = null; lastK = null; persist(); }
+    };
+    svg.addEventListener("pointerup", end); svg.addEventListener("pointercancel", end); svg.addEventListener("lostpointercapture", () => { if (moveSt){ moveSt = null; svg.classList.remove("moving"); } end(); });
   }
   function nextFree(from){
     const info = groupsInfo(); let m = Math.max(1, from);
@@ -3452,6 +3626,117 @@ const MAN = (() => {
     if (st.autoNext && now && now.cells.length >= st.P) st.curG = nextFree(st.curG + 1);
     changed();
   }
+  // geri al / ileri al: her değişiklikten önce tasarımın kopyası saklanır (en çok 60 adım)
+  let undoS = [], redoS = [];
+  const snapNow = () => JSON.stringify({d: design(), g: st.curG, k: gid()});
+  function snap(){ undoS.push(snapNow()); if (undoS.length > 60) undoS.shift(); redoS = []; syncUndo(); }
+  function restoreSnap(t){ const v = JSON.parse(t); if (v.k !== gid()) return false; st.designs2[gid()] = v.d; st.curG = v.g; persist(); changed(); return true; }
+  function undo(){ if (!undoS.length) return; const cur = snapNow(), t = undoS.pop(); if (restoreSnap(t)) redoS.push(cur); syncUndo(); }
+  function redo(){ if (!redoS.length) return; const cur = snapNow(), t = redoS.pop(); if (restoreSnap(t)) undoS.push(cur); syncUndo(); }
+  function syncUndo(){ const u = $("man-undo"), r = $("man-redo"); if (u) u.disabled = !undoS.length; if (r) r.disabled = !redoS.length; }
+
+  // ---- kat işlemleri: aynala, döndür, sonraki kata kopyala ----
+  function mapLayer(fn, label){
+    const d = design(), lay = d[st.L] || {}, keys = Object.keys(lay);
+    if (!keys.length){ flash("Bu katta hücre yok.", true); return; }
+    const out = {};
+    for (const k of keys){
+      const [i, j] = k.split(",").map(Number), t = fn(i, j);
+      const nk = t[0] + "," + t[1];
+      if (!idx.has(nk)){ flash(`${label} yapılamadı: bazı hücreler ızgaranın dışına düşüyor (petek ızgarada sıralar kaydırmalıdır).`, true); return; }
+      out[nk] = lay[k];
+    }
+    snap(); d[st.L] = out; persist(); changed(); flash(`Kat ${st.L + 1}: ${label} yapıldı.`);
+  }
+  const rowLen = j => (grid.rows[j] || []).length, nRows = () => grid.rows.length;
+  function copyToNext(){
+    const d = design(), lay = d[st.L] || {}, keys = Object.keys(lay);
+    if (!keys.length){ flash("Bu katta hücre yok.", true); return; }
+    if (st.L + 1 >= grid.layers){ flash("Bu kutuda bir sonraki kat yok.", true); return; }
+    if (Object.keys(d[st.L + 1] || {}).length){ flash(`Kat ${st.L + 2} dolu. Önce o katı temizleyin.`, true); return; }
+    let maxG = 0; Object.values(d).forEach(l => Object.values(l || {}).forEach(n => { if (n > maxG) maxG = n; }));
+    const minG = Math.min(...Object.values(lay));
+    const out = {}; keys.forEach(k => { out[k] = lay[k] - minG + maxG + 1; });
+    snap(); d[st.L + 1] = out; st.L = st.L + 1; st.curG = nextFree(1); persist(); changed();
+    flash(`Kat ${st.L} → Kat ${st.L + 1} kopyalandı; grup numaraları S${maxG + 1}'den devam ediyor. Kutup yönleri kurala göre kendiliğinden ayarlanır.`);
+  }
+
+  // ---- Taşı aracı: bir grubu tutup sürükleyerek yerini değiştir ----
+  let moveSt = null;
+  function moveStart(c){
+    const lay = design()[st.L] || {}, n = lay[ik(c)];
+    if (!n){ flash("Taşımak için bir grubun hücresine dokunup sürükleyin.", true); return false; }
+    moveSt = {n, from: c, cells: Object.keys(lay).filter(k => lay[k] === n)}; return true;
+  }
+  function moveEnd(c){
+    const m = moveSt; moveSt = null; if (!m || !c) return;
+    const di = c.i - m.from.i, dj = c.j - m.from.j; if (!di && !dj) return;
+    const lay = design()[st.L] || {}, tgt = [];
+    for (const k of m.cells){
+      const [i, j] = k.split(",").map(Number), nk = (i + di) + "," + (j + dj);
+      if (!idx.has(nk)){ flash(`S${m.n} oraya sığmıyor (ızgaranın dışına çıkıyor).`, true); return; }
+      if (lay[nk] && lay[nk] !== m.n){ flash(`S${m.n} oraya taşınamaz: S${lay[nk]} ile çakışıyor.`, true); return; }
+      tgt.push(nk);
+    }
+    snap();
+    m.cells.forEach(k => delete lay[k]); tgt.forEach(k => lay[k] = m.n);
+    persist(); changed(); flash(`S${m.n} taşındı.`);
+  }
+
+  // ---- şablon kütüphanesi: tasarımları adla kaydet, aç, dosya olarak paylaş ----
+  const TKEY = "batarya-sablon-v1";
+  const tList = () => { try { const a = JSON.parse(localStorage.getItem(TKEY) || "[]"); return Array.isArray(a) ? a : []; } catch (e) { return []; } };
+  const tSave = a => { try { localStorage.setItem(TKEY, JSON.stringify(a)); return true; } catch (e) { return false; } };
+  function tRender(sel){
+    const el = $("man-tsel"); if (!el) return;
+    const a = tList().sort((x, y) => (y.savedAt || 0) - (x.savedAt || 0));
+    el.innerHTML = `<option value="">${a.length ? `— Şablonlar (${a.length}) —` : "— Şablon yok —"}</option>` + a.map(t => `<option value="${t.id}">${escH(t.name)} · ${escH(t.summary || "")}</option>`).join("");
+    if (sel) el.value = sel;
+  }
+  function tCurrent(name){
+    const res = buildPlan(), nS = res.nums ? res.nums.length : 0;
+    const R0 = manualInputs();
+    return {id: "t" + Date.now().toString(36) + Math.random().toString(36).slice(2, 5), name, savedAt: Date.now(),
+      summary: `${nS}S${st.P}P · ${fmt(st.P * R0.ah)} Ah · ${fmt(st.box.L, 0)}×${fmt(st.box.W, 0)}×${fmt(st.box.H, 0)} mm`,
+      data: {oKey: st.oKey, kind: st.kind, P: st.P, box: Object.assign({}, st.box), cell: Object.assign({}, st.cell), design: JSON.parse(JSON.stringify(design()))}};
+  }
+  function tOpen(id){
+    const t = tList().find(x => x.id === id); if (!t) return;
+    snap();
+    const v = t.data; st.oKey = v.oKey; st.kind = v.kind; st.P = v.P; st.box = Object.assign({}, v.box); st.cell = Object.assign({}, v.cell);
+    st.designs2 = st.designs2 || {}; st.designs2[gid()] = JSON.parse(JSON.stringify(v.design)); st.L = 0;
+    let maxG = 0; Object.values(v.design).forEach(l => Object.values(l || {}).forEach(n => { if (n > maxG) maxG = n; })); st.curG = maxG + 1;
+    undoS = []; redoS = []; syncUndo();
+    $("man-tname").value = t.name; persist(); refresh(); flash(`“${escH(t.name)}” şablonu açıldı.`);
+  }
+  async function tShare(){
+    const a = tList(); if (!a.length){ flash("Paylaşılacak şablon yok. Önce bir tasarımı şablon olarak kaydedin.", true); return; }
+    const selId = $("man-tsel").value, items = selId ? a.filter(t => t.id === selId) : a;
+    const name = items.length === 1 ? `sablon-${items[0].name.replace(/[^\wçğıöşüÇĞİÖŞÜ-]+/g, "-").slice(0, 40)}.json` : `sablonlar-${items.length}.json`;
+    const text = JSON.stringify({app: "kadro-sablon", v: 1, templates: items});
+    try {
+      const file = new File([text], name, {type: "application/json"});
+      if (navigator.canShare && navigator.canShare({files: [file]})){ await navigator.share({files: [file], title: "Şablon"}); flash(`${items.length} şablon paylaşıldı.`); return; }
+    } catch (e){ if (e && e.name === "AbortError") return; }
+    const lnk = document.createElement("a"); lnk.href = URL.createObjectURL(new Blob([text], {type: "application/json"})); lnk.download = name;
+    document.body.appendChild(lnk); lnk.click(); lnk.remove(); setTimeout(() => URL.revokeObjectURL(lnk.href), 4000);
+    flash(`${items.length} şablon <b>${name}</b> dosyasına aktarıldı.`);
+  }
+  function tImport(file){
+    if (!file) return;
+    const rd = new FileReader();
+    rd.onload = () => {
+      let arr = null; try { const v = JSON.parse(rd.result); arr = Array.isArray(v) ? v : v && v.templates; } catch (e) {}
+      arr = (arr || []).filter(t => t && t.id && t.name && t.data && t.data.design);
+      if (!arr.length){ flash("Bu dosyada şablon bulunamadı.", true); return; }
+      const cur = tList(); let n = 0;
+      arr.forEach(t => { if (!cur.some(x => x.id === t.id)){ cur.push(t); n++; } });
+      if (!tSave(cur)){ flash("Şablonlar kaydedilemedi.", true); return; }
+      tRender(); flash(n ? `${n} şablon eklendi. Listeden seçip açabilirsiniz.` : "Bu şablonların hepsi zaten listede var.");
+    };
+    rd.readAsText(file);
+  }
+
   function changed(){
     drawTools(); drawEditor();
     clearTimeout(tmr); tmr = setTimeout(update, 140);
@@ -3488,6 +3773,7 @@ const MAN = (() => {
     st.cell = {preset: $("preset").value, chem: R0.chem, d: R0.d, len: R0.len, ah: R0.ah, wt: R0.wt, gap: R0.gap, lgap: R0.lgap, crate: R0.crate};
     const d = {};
     pl.groups.forEach(grp => { d[grp.L] = d[grp.L] || {}; grp.cells.forEach(c => { d[grp.L][ik(c)] = grp.g + 1; }); });
+    snap();
     st.designs2 = st.designs2 || {}; st.designs2[gid()] = d; st.L = 0; st.curG = pl.groups.length + 1;
     persist(); refresh();
     flash(`“${escH(pl.shape)}” planı kutusu (${fmt(mb.L, 0)}×${fmt(mb.W, 0)}×${fmt(mb.H, 0)} mm) ve hücresiyle birlikte kopyalandı; üzerinde değişiklik yapabilirsiniz.`);
@@ -3520,12 +3806,190 @@ const MAN = (() => {
       const has = Object.values(design()).some(l => Object.keys(l || {}).length);
       if (has) arm(e.currentTarget, "from", "Tekrar dokunun: mevcut tasarım silinir", fromPlan); else fromPlan();
     });
-    $("man-clearL").addEventListener("click", e => arm(e.currentTarget, "cl", `Tekrar dokunun: Kat ${st.L + 1} silinir`, () => { delete design()[st.L]; persist(); changed(); }));
-    $("man-clearA").addEventListener("click", e => arm(e.currentTarget, "ca", "Tekrar dokunun: hepsi silinir", () => { st.designs2 = st.designs2 || {}; st.designs2[gid()] = {}; st.curG = 1; persist(); changed(); }));
+    $("man-clearL").addEventListener("click", e => arm(e.currentTarget, "cl", `Tekrar dokunun: Kat ${st.L + 1} silinir`, () => { snap(); delete design()[st.L]; persist(); changed(); }));
+    $("man-undo").addEventListener("click", undo); $("man-redo").addEventListener("click", redo); syncUndo();
+    document.addEventListener("keydown", e => {
+      if (!pageShown("elle") || !(e.ctrlKey || e.metaKey) || /input|select|textarea/i.test((e.target.tagName || ""))) return;
+      const k = e.key.toLowerCase();
+      if (k === "z" && !e.shiftKey){ e.preventDefault(); undo(); } else if (k === "y" || (k === "z" && e.shiftKey)){ e.preventDefault(); redo(); }
+    });
+    $("man-flipH").addEventListener("click", () => mapLayer((i, j) => [rowLen(j) - 1 - i, j], "yatay aynalama"));
+    $("man-flipV").addEventListener("click", () => mapLayer((i, j) => [i, nRows() - 1 - j], "dikey aynalama"));
+    $("man-rot").addEventListener("click", () => mapLayer((i, j) => [rowLen(j) - 1 - i, nRows() - 1 - j], "180° döndürme"));
+    $("man-copyL").addEventListener("click", copyToNext);
+    tRender();
+    $("man-tsel").addEventListener("change", e => { if (e.target.value) tOpen(e.target.value); });
+    $("man-tsave").addEventListener("click", () => {
+      const has = Object.values(design()).some(l => Object.keys(l || {}).length);
+      if (!has){ flash("Kaydedilecek tasarım yok. Önce hücreleri dizin.", true); return; }
+      const name = ($("man-tname").value || "").trim();
+      if (!name){ flash("Şablona bir ad verin (ör. 36V 10S4P scooter).", true); $("man-tname").focus(); return; }
+      const a = tList(), t = tCurrent(name), old = a.findIndex(x => x.name.toLocaleLowerCase("tr") === name.toLocaleLowerCase("tr"));
+      if (old >= 0){ t.id = a[old].id; a[old] = t; } else a.push(t);
+      if (!tSave(a)){ flash("Şablon kaydedilemedi (kayıt alanı dolu ya da gizli sekme).", true); return; }
+      tRender(t.id); flash(`“${escH(name)}” şablonu ${old >= 0 ? "güncellendi" : "kaydedildi"}.`);
+    });
+    $("man-tdel").addEventListener("click", e => {
+      const id = $("man-tsel").value; if (!id){ flash("Silmek için listeden bir şablon seçin.", true); return; }
+      arm(e.currentTarget, "td", "Tekrar dokunun: şablon silinir", () => { tSave(tList().filter(x => x.id !== id)); tRender(); flash("Şablon silindi."); });
+    });
+    $("man-tshare").addEventListener("click", tShare);
+    $("man-timport").addEventListener("click", () => $("man-tfile").click());
+    $("man-tfile").addEventListener("change", e => { tImport(e.target.files[0]); e.target.value = ""; });
+    $("man-clearA").addEventListener("click", e => arm(e.currentTarget, "ca", "Tekrar dokunun: hepsi silinir", () => { snap(); st.designs2 = st.designs2 || {}; st.designs2[gid()] = {}; st.curG = 1; persist(); changed(); }));
   }
   function exportState(){ return JSON.parse(JSON.stringify(st)); }
   function importState(v){ if (v && typeof v === "object"){ Object.assign(st, JSON.parse(JSON.stringify(v))); upCell(); persist(); if (pageShown("elle")) refresh(); } }
   return {bind, refresh, onShow: refresh, exportState, importState};
+})();
+
+/* ---------- AR: paketi telefon kamerasında gerçek boyutta göster ---------- */
+const AR = (() => {
+  const base = () => window.BATARYA_APP ? "lib/ar/" : null;
+  const load = src => new Promise((res, rej) => { if (document.querySelector('script[data-ar="' + src + '"]')) return res(); const el = document.createElement("script"); el.src = src; el.dataset.ar = src; el.onload = res; el.onerror = rej; document.head.appendChild(el); });
+  let url = null, mvLoaded = null;
+  async function libs(){
+    const b = base(), cdn = "https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/";
+    if (!THREE.BufferGeometryUtils) await load(b ? b + "BufferGeometryUtils.js" : cdn + "utils/BufferGeometryUtils.js");
+    if (!THREE.GLTFExporter) await load(b ? b + "GLTFExporter.js" : cdn + "exporters/GLTFExporter.js");
+    if (!mvLoaded) mvLoaded = new Promise((res, rej) => {
+      if (window.customElements && customElements.get("model-viewer")) return res();
+      const el = document.createElement("script"); el.type = "module"; el.src = b ? b + "model-viewer.min.js" : "https://cdn.jsdelivr.net/npm/@google/model-viewer@3.5.0/dist/model-viewer.min.js";
+      el.onload = () => customElements.whenDefined("model-viewer").then(res); el.onerror = rej; document.head.appendChild(el);
+    });
+    await mvLoaded;
+  }
+  function close(){ const m = document.getElementById("ar-modal"); if (m) m.remove(); if (url){ URL.revokeObjectURL(url); url = null; } }
+  async function open(){
+    close();
+    const m = document.createElement("div"); m.id = "ar-modal";
+    const R = lastDetail && lastDetail[0], pl = lastDetail && lastDetail[1];
+    m.innerHTML = `<div class="ar-box"><div class="ar-top"><b>AR'da gör</b><span>${R && pl ? `${R.S}S${pl.P}P · ${fmt(pl.P * R.ah)} Ah · gerçek boyut` : ""}</span><button type="button" class="btn" id="ar-close">Kapat</button></div>
+      <div class="ar-stage"><div class="ar-wait">Model hazırlanıyor…</div></div>
+      <div class="ar-help">Telefonda <b>“Kamerada gör”</b>e basın, kamerayı masaya ya da açık kutunun içine tutun; paket gerçek boyutuyla yerleşir. Parmağınızla çevirip taşıyabilirsiniz. Bilgisayarda burada döndürüp inceleyebilirsiniz; kamera için uygulamayı telefonda açın. İpucu: önce “Bitmiş paket”i açarsanız sarılı ve etiketli hâli görünür.</div></div>`;
+    document.body.appendChild(m);
+    m.querySelector("#ar-close").onclick = close;
+    m.addEventListener("click", e => { if (e.target === m) close(); });
+    try {
+      await libs();
+      const blob = await V3.exportGLB();
+      url = URL.createObjectURL(blob);
+      const st = m.querySelector(".ar-stage");
+      st.innerHTML = `<model-viewer src="${url}" alt="Batarya paketi 3D modeli" ar ar-modes="webxr scene-viewer quick-look" ar-scale="fixed" ar-placement="floor"
+        camera-controls touch-action="pan-y" auto-rotate shadow-intensity="1" shadow-softness=".8" exposure="1.05" environment-image="neutral" interaction-prompt="none">
+        <button slot="ar-button" class="btn primary ar-go">Kamerada gör</button></model-viewer>`;
+    } catch (e){
+      const w = m.querySelector(".ar-wait"); if (w) w.textContent = "Model hazırlanamadı. İnternet bağlantısını kontrol edip tekrar deneyin.";
+    }
+  }
+  document.addEventListener("click", e => { if (e.target.closest && e.target.closest("#t_ar")) open(); });
+  document.addEventListener("keydown", e => { if (e.key === "Escape") close(); });
+  return {open, close};
+})();
+
+/* ---------- Yazdırılabilir belgeler: 1:1 jig şablonu ve teknik çizim ---------- */
+const DOCS = (() => {
+  const A4W = 190, A4H = 277;   // A4, 10 mm kenar boşluğu
+  const brand = () => document.title || "Batarya Kutusu Hesaplayıcı";
+  const logo = () => window.BATARYA_APP ? `<img src="simgeler/simge-192.png" alt="" class="pp-logo">` : "";
+  const today = () => new Date().toLocaleDateString("tr-TR");
+  const projName = R => (document.getElementById("proj-name") || {}).value || `${R.S}S paket`;
+  const head = (R, pl, title, sub) => `<div class="pp-head">${logo()}<div class="pp-brand">${escH(brand())}</div><div class="pp-title">${title}<small>${sub}</small></div><div class="pp-meta">${escH(projName(R))}<br>${R.S}S${pl.P}P · ${fmt(R.S * R.cv, 1)} V · ${fmt(pl.P * R.ah)} Ah<br>${today()}</div></div>`;
+  // 100 mm ölçek çizgisi: baskı ölçeğini kontrol etmek için
+  const ruler = () => { let t = ""; for (let i = 0; i <= 100; i += 10) t += `<line x1="${i + 2}" y1="${i % 50 ? 4 : 2}" x2="${i + 2}" y2="8" stroke="#111" stroke-width=".3"/>`;
+    return `<div class="pp-ruler"><svg width="104mm" height="10mm" viewBox="0 0 104 10"><line x1="2" y1="8" x2="102" y2="8" stroke="#111" stroke-width=".4"/>${t}</svg><span>Bu çizgi tam <b>100 mm</b> olmalı. Değilse yazdırma ölçeğini <b>%100</b> yapın.</span></div>`; };
+
+  // bir katın üst yüzü: gerçek ölçüde yuvalar, grup no ve kutup
+  function layerSVG(R, pl, L, vb, wmm, hmm, opts = {}){
+    const g = pl.grid, r = R.d / 2, used = new Map();
+    const rt = c => opts.rot ? ` transform="rotate(-90 ${c.x} ${c.y})"` : "";
+    pl.layers[L].forEach(grp => grp.cells.forEach(c => used.set(c.k, grp)));
+    let t = opts.rot
+      ? `<svg width="${g.b}mm" height="${g.a}mm" viewBox="0 0 ${g.b} ${g.a}" xmlns="http://www.w3.org/2000/svg" font-family="Arial, sans-serif"><g transform="translate(${g.b} 0) rotate(90)">`
+      : `<svg width="${wmm}mm" height="${hmm}mm" viewBox="${vb.join(" ")}" xmlns="http://www.w3.org/2000/svg" font-family="Arial, sans-serif"><g>`;
+    t += `<rect x="0" y="0" width="${g.a}" height="${g.b}" fill="none" stroke="#999" stroke-width=".3" stroke-dasharray="2 1.5"/>`;
+    g.cells.forEach(c => {
+      const grp = used.get(c.k);
+      if (!grp){ t += `<circle cx="${c.x}" cy="${c.y}" r="${r - 0.4}" fill="none" stroke="#bbb" stroke-width=".25" stroke-dasharray="1.2 1"/>`; return; }
+      const plus = grp.top === "+";
+      t += `<circle cx="${c.x}" cy="${c.y}" r="${r - 0.3}" fill="${plus ? "#ffe6d2" : "#e3e9f8"}" stroke="#111" stroke-width=".35"/>`;
+      t += `<text${rt(c)} x="${c.x}" y="${c.y - r * 0.18}" font-size="${Math.max(3, r * 0.75)}" font-weight="700" text-anchor="middle" dominant-baseline="central" fill="${plus ? "#c0390b" : "#1d3fae"}">${plus ? "+" : "−"}</text>`;
+      if (!opts.small) t += `<text${rt(c)} x="${c.x}" y="${c.y + r * 0.5}" font-size="${Math.max(2.2, r * 0.32)}" text-anchor="middle" dominant-baseline="central" fill="#222">S${grp.g + 1}</text>`;
+    });
+    // grupların çevresi (her grubun hücrelerini saran ince çerçeve)
+    pl.layers[L].forEach(grp => {
+      const xs = grp.cells.map(c => c.x), ys = grp.cells.map(c => c.y);
+      if (grp.regular) t += `<rect x="${Math.min(...xs) - r + 0.2}" y="${Math.min(...ys) - r + 0.2}" width="${Math.max(...xs) - Math.min(...xs) + 2 * r - 0.4}" height="${Math.max(...ys) - Math.min(...ys) + 2 * r - 0.4}" rx="${r * 0.7}" fill="none" stroke="#ff8f1f" stroke-width="${opts.small ? .6 : .45}"/>`;
+    });
+    return t + `</g></svg>`;
+  }
+
+  function jigPages(R, pl){
+    const g = pl.grid, [fTop] = faceNames(g.o), tw = A4W, th = A4H - 52, pages = [];
+    // dik sığmıyor ama 90° döndürünce sığıyorsa her kat tek sayfa
+    if (!(g.a <= tw && g.b <= th) && g.b <= tw && g.a <= th){
+      pl.layers.forEach((lay, L) => pages.push(`<section class="pp">${head(R, pl, "1:1 jig şablonu", `Kat ${L + 1} / ${pl.Lu} · ${fTop} · ${g.o.name} · 90° döndürülmüş`)}
+        ${ruler()}<div class="pp-draw" style="width:${g.b}mm;height:${g.a}mm">${layerSVG(R, pl, L, null, 0, 0, {rot: true})}</div>
+        <div class="pp-legend"><span class="lg p">+</span> bu yüzde artı uç görünür <span class="lg m">−</span> eksi uç görünür <span class="lg e"></span> boş yuva · turuncu çerçeve: paralel grup · şablon sayfaya sığması için 90° döndürüldü · ${DIM_NAMES[g.o.a]} ${fmt(g.a, 0)} mm × ${DIM_NAMES[g.o.b]} ${fmt(g.b, 0)} mm · hücre Ø${fmt(R.d)} mm, aralık ${fmt(R.p)} mm</div></section>`));
+      return pages;
+    }
+    const cols = Math.ceil(g.a / tw), rows = Math.ceil(g.b / th);
+    pl.layers.forEach((lay, L) => {
+      for (let rj = 0; rj < rows; rj++) for (let ci = 0; ci < cols; ci++){
+        const x0 = ci * tw, y0 = rj * th, w = Math.min(tw, g.a - x0), hh = Math.min(th, g.b - y0);
+        const part = cols * rows > 1 ? ` · parça ${rj * cols + ci + 1}/${cols * rows} (sütun ${ci + 1}, satır ${rj + 1})` : "";
+        const marks = cols * rows > 1 ? `<div class="pp-note">Parçaları kesik çizgilerden birleştirip bantlayın; köşe işaretleri üst üste gelmeli.</div>` : "";
+        pages.push(`<section class="pp">${head(R, pl, "1:1 jig şablonu", `Kat ${L + 1} / ${pl.Lu} · ${fTop} · ${g.o.name}${part}`)}
+          ${ruler()}
+          <div class="pp-draw" style="width:${w}mm;height:${hh}mm">${layerSVG(R, pl, L, [x0, y0, w, hh], w, hh)}</div>
+          <div class="pp-legend"><span class="lg p">+</span> bu yüzde artı uç görünür <span class="lg m">−</span> eksi uç görünür <span class="lg e"></span> boş yuva · turuncu çerçeve: paralel grup · ${DIM_NAMES[g.o.a]} ${fmt(g.a, 0)} mm × ${DIM_NAMES[g.o.b]} ${fmt(g.b, 0)} mm · hücre Ø${fmt(R.d)} mm, aralık ${fmt(R.p)} mm</div>${marks}</section>`);
+      }
+    });
+    return pages;
+  }
+
+  function techPages(R, pl, img){
+    const g = pl.grid, B = R.box, [fTop] = faceNames(g.o), C = chem();
+    const kv = [["Dizilim", `${R.S}S${pl.P}P · ${pl.used} hücre`], ["Nominal / şarj", `${fmt(R.S * R.cv, 1)} V / ${fmt(R.S * C.full, 1)} V`], ["Kapasite / enerji", `${fmt(pl.P * R.ah)} Ah / ${fmt(R.S * R.cv * pl.P * R.ah / 1000, 2)} kWh`],
+      ["Sürekli akım", `~${fmt(pl.P * R.ah * R.crate, 0)} A`], ["Hücre ağırlığı", `~${fmt(pl.used * R.wt / 1000, 1)} kg`], ["Kutu (iç)", `${fmt(B.L, 0)} × ${fmt(B.W, 0)} × ${fmt(B.H, 0)} mm`],
+      ["Hücre", `${C.name} Ø${fmt(R.d)} × ${fmt(R.len)} mm · ${fmt(R.ah)} Ah`], ["Yerleşim", `${g.o.name} · ${g.hex ? "petek" : "kare"} ızgara · ${pl.Lu} kat`], ["Plan", `${pl.shape} · ${pl.strips.length} şerit`]];
+    const block = (n, tot) => `<table class="pp-tb"><tr><td colspan="2" class="tb-b">${logo()}${escH(brand())}</td></tr><tr><td>Proje</td><td>${escH(projName(R))}</td></tr><tr><td>Çizim</td><td>Batarya paketi · patlatılmış görünüş</td></tr><tr><td>Tarih</td><td>${today()}</td></tr><tr><td>Ölçek</td><td>Ölçeksiz (3D) · kat görünüşleri ölçekli</td></tr><tr><td>Sayfa</td><td>${n} / ${tot}</td></tr></table>`;
+    const p1 = `<section class="pp tech">${head(R, pl, "Teknik çizim", "Patlatılmış görünüş ve teknik bilgiler")}
+      <div class="pp-frame">${img ? `<img class="pp-render" src="${img}" alt="Patlatılmış 3D görünüş">` : `<div class="pp-note">3D görüntü oluşturulamadı.</div>`}</div>
+      <div class="pp-cols"><table class="pp-kv">${kv.map(([k, v]) => `<tr><th>${k}</th><td>${v}</td></tr>`).join("")}</table>${block(1, 2)}</div></section>`;
+    // sayfa 2: kat görünüşleri (ölçekli) ve malzeme listesi
+    const fit = Math.min(1, (A4W - 4) / g.a, 70 / g.b);
+    const views = pl.layers.map((lay, L) => `<figure class="pp-fig"><figcaption>Kat ${L + 1} · ${fTop} · ölçek 1:${fmt(1 / fit, 1)}</figcaption>${layerSVG(R, pl, L, [0, 0, g.a, g.b], g.a * fit, g.b * fit, {small: fit < 0.6})}</figure>`).join("");
+    const p2 = `<section class="pp tech">${head(R, pl, "Teknik çizim", "Kat görünüşleri ve malzeme listesi")}<div class="pp-views">${views}</div>
+      <h4 class="pp-h4">Malzeme listesi</h4>${materialsHTML(R, pl)}<div class="pp-cols">${block(2, 2)}</div></section>`;
+    return [p1, p2];
+  }
+
+  // önizleme: ekranda sayfalar; "Yazdır / PDF" ile yalnızca sayfalar basılır
+  function open(pages, title){
+    let root = document.getElementById("printroot");
+    if (!root){ root = document.createElement("div"); root.id = "printroot"; document.body.appendChild(root); }
+    root.innerHTML = `<div class="pbar"><b>${title}</b><span class="hint">Yazdırırken ölçek <b>%100 / Gerçek boyut</b> seçin. Telefonda “PDF olarak kaydet” ile dosyaya alabilirsiniz.</span>
+      <button type="button" class="btn primary" id="pp-print">Yazdır / PDF</button><button type="button" class="btn" id="pp-close">Kapat</button></div><div class="pp-pages">${pages.join("")}</div>`;
+    document.body.classList.add("printing");
+    root.querySelector("#pp-close").onclick = close;
+    root.querySelector("#pp-print").onclick = () => { try { window.print(); } catch (e) {} };
+    root.scrollTop = 0;
+  }
+  function close(){ document.body.classList.remove("printing"); const r = document.getElementById("printroot"); if (r) r.innerHTML = ""; }
+  function jig(){
+    if (!lastDetail) return;
+    const [R, pl] = lastDetail; open(jigPages(R, pl), `1:1 jig şablonu · ${pl.Lu} kat`);
+  }
+  function tech(){
+    if (!lastDetail) return;
+    const [R, pl] = lastDetail;
+    const img = V3.renderImage({explode: pl.Lu > 1 ? 0.75 : 0, w: 2200, h: 1350, k: pl.Lu > 1 ? 0.9 : 0.78});
+    open(techPages(R, pl, img), "Teknik çizim");
+  }
+  document.addEventListener("click", e => { const b = e.target.closest && e.target.closest("[data-doc]"); if (!b) return; if (b.dataset.doc === "jig") jig(); else tech(); });
+  document.addEventListener("keydown", e => { if (e.key === "Escape" && document.body.classList.contains("printing")) close(); });
+  return {jig, tech, close};
 })();
 
 /* ---------- Plan detayı ---------- */
@@ -3560,7 +4024,12 @@ function renderDetail(R, pl, plans){
     : [true, `Seri geçişlerde her hücrenin karşısında bir hücre var; akım şeritlere eşit dağılır.`]);
   if (worst !== pl && worst.total > pl.total) reasons.push([true, `En zor seçeneğe göre yaklaşık <b>${fmtTime(worst.total - pl.total)}</b> daha kısa.`]);
 
-  let h = `<div class="dhead">
+  let h = `<div class="doc-actions">
+      <button type="button" class="btn primary" data-doc="jig"><svg viewBox="0 0 20 20" aria-hidden="true"><rect x="3" y="3" width="14" height="14" rx="1.5"/><circle cx="7.5" cy="7.5" r="1.8"/><circle cx="12.5" cy="7.5" r="1.8"/><circle cx="7.5" cy="12.5" r="1.8"/><circle cx="12.5" cy="12.5" r="1.8"/></svg>1:1 jig şablonu yazdır</button>
+      <button type="button" class="btn" data-doc="tech"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M3 16.5h14M4 13l4-9 4 6 4-5"/><path d="M3 3.5v13"/></svg>Teknik çizim (PDF)</button>
+      <span class="hint">Yazdırırken ölçek <b>%100 / Gerçek boyut</b> seçin; PDF olarak da kaydedebilirsiniz.</span>
+    </div>
+    <div class="dhead">
       <div><div class="eyebrow">Seçili plan</div><h2 class="dtitle">${pl.shape}</h2>
         <div class="dsub">${o.name} · ${g.hex ? "petek" : "kare"} ızgara · ${pl.Lu} kat · ${R.S}S${pl.P}P · ${pl.strips.length} şerit</div></div>
       <div class="dtime"><span>Tahmini süre</span><b>${fmtTime(pl.total)}</b></div>
@@ -3988,12 +4457,22 @@ route();
 </script>
 
 <script>
-// çevrimdışı çalışma ve güncelleme: yeni sürüm yüklenince sayfa bir kez yenilenir
+// çevrimdışı çalışma ve güncelleme. Sayfa her açılışta internetten güncel hâliyle gelir; kendiliğinden yeniden yüklenmez.
+// Nadiren eski sürüm açılmışsa (yavaş bağlantı) altta "Yeni sürüm hazır · Yenile" bildirimi çıkar.
 if ("serviceWorker" in navigator){
   window.addEventListener("load", () => {
     navigator.serviceWorker.register("sw.js").catch(() => {});
-    let reloaded = false;
-    navigator.serviceWorker.addEventListener("controllerchange", () => { if (reloaded) return; reloaded = true; location.reload(); });
+    navigator.serviceWorker.addEventListener("controllerchange", async () => {
+      try {
+        const t = await (await fetch("./", {cache: "no-store"})).text();
+        const m = t.match(/name="app-ver" content="([^"]+)"/), cur = document.querySelector('meta[name="app-ver"]');
+        if (!m || !cur || m[1] === cur.content || document.getElementById("upd-toast")) return;
+        const d = document.createElement("div"); d.id = "upd-toast";
+        d.innerHTML = 'Yeni sürüm hazır <button type="button">Yenile</button>';
+        d.querySelector("button").onclick = () => location.reload();
+        document.body.appendChild(d);
+      } catch (e) {}
+    });
   });
 }
 </script>

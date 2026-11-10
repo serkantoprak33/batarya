@@ -9,8 +9,8 @@
   "id": "./",
   "display": "standalone",
   "orientation": "any",
-  "background_color": "#0d1012",
-  "theme_color": "#0d1012",
+  "background_color": "#111214",
+  "theme_color": "#111214",
   "icons": [
     {
       "src": "simgeler/simge-192.png",

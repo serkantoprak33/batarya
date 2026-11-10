@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="theme-color" content="#0d1012">
+<meta name="theme-color" content="#111214">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Kadro Tasarım">
@@ -13,9 +13,9 @@
 <link rel="icon" type="image/png" sizes="32x32" href="simgeler/favicon-32.png">
 <link rel="apple-touch-icon" href="simgeler/apple-touch-icon.png">
 <style>[hidden]{display:none!important}</style>
-<script>window.BATARYA_APP = true;</script>
+<script>window.BATARYA_APP = true; window.BATARYA_HDR = "lib/studio.hdr";</script>
 <style>
-#splash{position:fixed;inset:0;z-index:100;display:grid;place-items:center;background:radial-gradient(90% 70% at 50% 40%,#1b2126 0%,#0d1012 70%);transition:opacity .45s ease,visibility .45s}
+#splash{position:fixed;inset:0;z-index:100;display:grid;place-items:center;background:radial-gradient(90% 70% at 50% 40%,#202226 0%,#111214 70%);transition:opacity .45s ease,visibility .45s}
 #splash.out{opacity:0;visibility:hidden}
 #splash img{width:132px;height:132px;animation:spl 1.1s ease-out both}
 #splash span{display:block;margin-top:14px;text-align:center;font:700 22px/1 "Barlow Condensed","Arial Narrow",sans-serif;letter-spacing:.14em;color:#e9eef0;text-transform:uppercase;animation:spl 1.1s .12s ease-out both}
@@ -34,16 +34,17 @@
 <style>
 /* Düzen: atölye tezgâhı — solda sabit ölçü föyü, sağda paket etiketi, plan listesi ve montaj şeması.
    Renkler pil atölyesinden: ısıyla daralan PVC mavisi, kapton bandı amberi, nikel grisi, fish-paper kırmızısı. */
-/* KADRO kimliği: koyu antrasit zemin, vurgularda KADRO yeşili (varsayılan). Açık tema yalnız data-theme="light" ile. */
+/* Renk paleti: kömür siyahı zemin, royal mavi ana vurgu, mandalina turuncusu ikinci vurgu. Açık tema yalnız data-theme="light" ile. */
 :root{
-  --bg:#0d1012; --surface:#15191c; --surface-2:#1b2024; --ink:#ecf0f2; --muted:#919ca4;
-  --line:#252b30; --line-strong:#363e45;
-  --accent:#16d45a; --accent-ink:#04130a; --accent-soft:#10291a;
-  --kapton:#f0a744; --kapton-soft:#2c2213;
+  --bg:#111214; --surface:#18191c; --surface-2:#1f2124; --ink:#eef0f2; --muted:#9a9fa7;
+  --line:#2a2c30; --line-strong:#3a3d42;
+  --accent:#3b6cf6; --accent-ink:#ffffff; --accent-soft:#16224a;
+  --accent2:#ff8a1e; --accent2-ink:#1a0d00; --accent2-soft:#33200c;
+  --kapton:#ff9a3c; --kapton-soft:#33200c;
   --good:#3fca7d; --good-soft:#11291c; --bad:#ef6a55; --bad-soft:#2e1714;
-  --nickel1:#8d98a3; --nickel2:#bac3cb; --plus:#ff6b5e; --minus:#0e1317; --tap:#f5a33d;
-  --label-bg:#0a0d0f; --unused:#3a434b; --box:#9aa6b0; --sel:#10291a;
-  --shadow:0 1px 0 rgba(255,255,255,.035) inset, 0 12px 32px rgba(0,0,0,.32);
+  --nickel1:#8d98a3; --nickel2:#bac3cb; --plus:#ff6b5e; --minus:#0e1317; --tap:#ff9a3c;
+  --label-bg:#0b0c0e; --unused:#3b3e43; --box:#a2a7ae; --sel:#16224a;
+  --shadow:0 1px 0 rgba(255,255,255,.035) inset, 0 14px 34px rgba(0,0,0,.34);
   --text:var(--ink); --panel:var(--surface);
   --f-display:"Barlow Condensed","Arial Narrow","Roboto Condensed",sans-serif;
   --f-body:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
@@ -54,11 +55,12 @@
 :root[data-theme="light"]{
   --bg:#eef1f0; --surface:#ffffff; --surface-2:#f5f7f6; --ink:#121a17; --muted:#56655e;
   --line:#d5ddd9; --line-strong:#b4c0ba;
-  --accent:#0b8f39; --accent-ink:#ffffff; --accent-soft:#e2f5e8;
+  --accent:#2453d6; --accent-ink:#ffffff; --accent-soft:#e3eafc;
+  --accent2:#e8740c; --accent2-ink:#ffffff; --accent2-soft:#fdeedd;
   --kapton:#b86c0c; --kapton-soft:#fbefdc;
   --good:#2b8455; --good-soft:#e1f2e8; --bad:#c2412d; --bad-soft:#fbe6e2;
   --nickel1:#7f8a95; --nickel2:#aab3bc; --plus:#d0342c; --minus:#14202a; --tap:#e08a12;
-  --label-bg:#1c2731; --unused:#c2cbd2; --box:#33424f; --sel:#e2f5e8;
+  --label-bg:#1c2731; --unused:#c2cbd2; --box:#33424f; --sel:#e3eafc;
   --shadow:0 1px 2px rgba(0,0,0,.04), 0 8px 24px rgba(0,0,0,.06);
   color-scheme:light;
 }
@@ -120,7 +122,7 @@ details.grp[open]>summary::after{content:"−"}
 .plate-body{display:grid;grid-template-columns:auto minmax(0,1fr);gap:24px;align-items:center;padding:18px 18px 16px}
 @media (max-width:640px){ .plate-body{grid-template-columns:minmax(0,1fr);gap:12px} }
 .cfg{font:700 clamp(56px,9vw,92px)/.85 var(--f-display);letter-spacing:-.01em;display:flex;align-items:baseline}
-.cfg .p{color:var(--accent)}
+.cfg .p{color:var(--accent2)}
 .kv{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:0;margin:0}
 @media (max-width:760px){ .kv{grid-template-columns:repeat(2,minmax(0,1fr));row-gap:12px} }
 .kv>div{padding:2px 14px;border-left:1px solid var(--line)}
@@ -370,11 +372,13 @@ label.chip{background:none;padding:0;border-radius:999px;font:inherit}
 .man-tools .trow .btn{padding:7px 12px;font-size:13px}
 .man-tools .field.inline .inp{width:118px}
 .btn.armed{border-color:var(--bad);color:var(--bad);background:var(--bad-soft)}
+.v3d-cap{position:absolute;left:16px;bottom:16px;z-index:2;padding:9px 16px 9px 14px;border-left:3px solid var(--accent2);border-radius:0 10px 10px 0;background:rgba(10,11,13,.72);color:#fff;font:700 clamp(16px,2.4vw,22px)/1.1 var(--f-display);letter-spacing:.06em;text-transform:uppercase;opacity:0;transform:translateY(8px);transition:opacity .35s,transform .35s;pointer-events:none}
+.v3d-cap.on{opacity:1;transform:none}
 .btn.shot{display:inline-flex;align-items:center;gap:7px;padding:7px 12px;font-size:13px}
 .btn.shot svg{width:17px;height:17px;fill:none;stroke:currentColor;stroke-width:1.6;stroke-linejoin:round}
 .v3d-msg{color:#aab4bc}
 /* 3D */
-.v3d{position:relative;height:clamp(340px,62vh,640px);border-radius:12px;border:1px solid var(--line);background:radial-gradient(120% 95% at 50% 18%, #2e363e 0%, #161b1f 58%, #0e1114 100%);overflow:hidden;touch-action:none}
+.v3d{position:relative;height:clamp(340px,62vh,640px);border-radius:12px;border:1px solid var(--line);background:radial-gradient(120% 95% at 50% 18%, #2f3237 0%, #17181b 58%, #0e0f11 100%);overflow:hidden;touch-action:none}
 .v3d canvas{display:block;width:100%;height:100%;cursor:grab}
 .v3d canvas:active{cursor:grabbing}
 .v3d-msg{display:grid;place-items:center;height:100%;color:var(--muted);font-size:14px;padding:16px;text-align:center}
@@ -387,7 +391,36 @@ label.chip{background:none;padding:0;border-radius:999px;font:inherit}
 .rng{display:inline-flex;align-items:center;gap:8px;font-size:13.5px}
 .rng input{accent-color:var(--accent);width:130px}
 :focus-visible{outline:2px solid var(--accent);outline-offset:2px}
-@media (prefers-reduced-motion: reduce){ *{transition:none!important} }
+/* sekmeler: masaüstünde uzun ad; telefonda ekranın altında ikonlu menü */
+.tabs .ts{display:none}
+.more-btn{display:none}
+.more-sheet{display:none}
+@media (max-width:760px){
+  .tabs{position:fixed;top:auto;bottom:0;left:0;right:0;border-top:1px solid var(--line-strong);border-bottom:0;background:rgba(21,22,25,.94);-webkit-backdrop-filter:blur(16px);backdrop-filter:blur(16px);padding-bottom:env(safe-area-inset-bottom,0px);z-index:40}
+  .tabs-in{justify-content:space-between;gap:2px;padding-block:6px 5px;overflow:visible}
+  .tabs a,.more-btn{flex:1 1 0;min-width:0;display:inline-flex;flex-direction:column;align-items:center;gap:3px;padding:6px 2px 5px;font:600 10.5px/1.1 var(--f-body);border-radius:12px;color:var(--muted);background:none;border:0;cursor:pointer}
+  .tabs a svg,.more-btn svg{width:23px;height:23px;fill:none;stroke:currentColor;stroke-width:1.6;stroke-linejoin:round}
+  .more-btn svg circle{fill:currentColor;stroke:none}
+  .tabs a.on,.more-btn.on{color:var(--accent);background:var(--accent-soft)}
+  .tabs a.more,.tabs .tl{display:none}
+  .tabs .ts{display:inline}
+  .tabs .cnt{display:none}
+  body{padding-bottom:calc(70px + env(safe-area-inset-bottom,0px))}
+  .more-sheet:not([hidden]){display:grid;gap:4px;position:fixed;left:10px;right:10px;bottom:calc(76px + env(safe-area-inset-bottom,0px));z-index:41;padding:8px;border-radius:18px;background:var(--surface-2);border:1px solid var(--line-strong);box-shadow:0 18px 40px rgba(0,0,0,.5);animation:sheetIn .22s cubic-bezier(.2,.7,.2,1)}
+  .more-sheet a{display:flex;align-items:center;gap:12px;padding:14px;border-radius:12px;color:var(--ink);text-decoration:none;font:600 15px var(--f-body)}
+  .more-sheet a:active,.more-sheet a.on{background:var(--accent-soft);color:var(--accent)}
+  .more-sheet svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.6;stroke-linejoin:round}
+  .chip span{padding:8px 13px}
+  .btn{padding:10px 15px}
+}
+@keyframes sheetIn{from{opacity:0;transform:translateY(12px)}}
+/* sayfa geçişi ve 3D yüklenirken */
+.page:not([hidden]){animation:pageIn .34s cubic-bezier(.2,.7,.2,1)}
+@keyframes pageIn{from{opacity:0;transform:translateY(8px)}}
+.v3d:empty::after{content:"3D hazırlanıyor…";position:absolute;inset:0;display:grid;place-items:center;color:#9aa0a8;font:600 13px var(--f-body);background:linear-gradient(100deg,transparent 30%,rgba(255,255,255,.05) 50%,transparent 70%) 0 0/250% 100%;animation:shimmer 1.4s linear infinite}
+@keyframes shimmer{to{background-position:-250% 0}}
+.pill.hot{background:var(--accent2-soft);color:var(--accent2)}
+@media (prefers-reduced-motion: reduce){ *{transition:none!important;animation:none!important} }
 </style>
 
 <header class="bar" lang="tr">
@@ -405,15 +438,21 @@ label.chip{background:none;padding:0;border-radius:999px;font:inherit}
 
 <nav class="tabs" aria-label="Bölümler" lang="tr">
   <div class="wrap tabs-in">
-    <a href="#hesap" data-page="hesap"><svg viewBox="0 0 20 20" aria-hidden="true"><rect x="3" y="5" width="14" height="11" rx="2"/><path d="M7 5V3h6v2"/></svg>Kutu hesabı</a>
-    <a href="#sema" data-page="sema"><svg viewBox="0 0 20 20" aria-hidden="true"><circle cx="6" cy="6" r="2.5"/><circle cx="14" cy="6" r="2.5"/><circle cx="6" cy="14" r="2.5"/><circle cx="14" cy="14" r="2.5"/></svg>Montaj şeması</a>
-    <a href="#uc-boyut" data-page="uc-boyut"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M10 2l7 4v8l-7 4-7-4V6z"/><path d="M3 6l7 4 7-4M10 10v8"/></svg>3D görünüm</a>
-    <a href="#simulasyon" data-page="simulasyon"><svg viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="10" r="7.5"/><path d="M8 6.5l5 3.5-5 3.5z"/></svg>3D montaj simülasyonu</a>
-    <a href="#elle" data-page="elle"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M13.5 3.5l3 3L8 15l-4 1 1-4z"/><path d="M12 5l3 3"/></svg>Elle tasarım</a>
-    <a href="#akim" data-page="akim"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M11 2L4 11h5l-1 7 7-9h-5z"/></svg>Akım ve menzil</a>
-    <a href="#karsilastir" data-page="karsilastir"><svg viewBox="0 0 20 20" aria-hidden="true"><rect x="2.5" y="4" width="6.5" height="12" rx="1.5"/><rect x="11" y="4" width="6.5" height="12" rx="1.5"/></svg>Karşılaştır <span class="cnt" id="cmp-cnt"></span></a>
+    <a href="#hesap" data-page="hesap"><svg viewBox="0 0 20 20" aria-hidden="true"><rect x="3" y="5" width="14" height="11" rx="2"/><path d="M7 5V3h6v2"/></svg><span class="tl">Kutu hesabı</span><span class="ts">Hesap</span></a>
+    <a href="#sema" data-page="sema"><svg viewBox="0 0 20 20" aria-hidden="true"><circle cx="6" cy="6" r="2.5"/><circle cx="14" cy="6" r="2.5"/><circle cx="6" cy="14" r="2.5"/><circle cx="14" cy="14" r="2.5"/></svg><span class="tl">Montaj şeması</span><span class="ts">Şema</span></a>
+    <a href="#uc-boyut" data-page="uc-boyut"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M10 2l7 4v8l-7 4-7-4V6z"/><path d="M3 6l7 4 7-4M10 10v8"/></svg><span class="tl">3D görünüm</span><span class="ts">3D</span></a>
+    <a href="#simulasyon" data-page="simulasyon"><svg viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="10" r="7.5"/><path d="M8 6.5l5 3.5-5 3.5z"/></svg><span class="tl">3D montaj simülasyonu</span><span class="ts">Simülasyon</span></a>
+    <a href="#elle" data-page="elle" class="more"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M13.5 3.5l3 3L8 15l-4 1 1-4z"/><path d="M12 5l3 3"/></svg><span class="tl">Elle tasarım</span><span class="ts">Elle</span></a>
+    <a href="#akim" data-page="akim" class="more"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M11 2L4 11h5l-1 7 7-9h-5z"/></svg><span class="tl">Akım ve menzil</span><span class="ts">Akım</span></a>
+    <a href="#karsilastir" data-page="karsilastir" class="more"><svg viewBox="0 0 20 20" aria-hidden="true"><rect x="2.5" y="4" width="6.5" height="12" rx="1.5"/><rect x="11" y="4" width="6.5" height="12" rx="1.5"/></svg><span class="tl">Karşılaştır</span><span class="ts">Kıyas</span> <span class="cnt" id="cmp-cnt"></span></a>
+    <button type="button" class="more-btn" id="more-btn" aria-haspopup="true" aria-expanded="false"><svg viewBox="0 0 20 20" aria-hidden="true"><circle cx="4.5" cy="10" r="1.6"/><circle cx="10" cy="10" r="1.6"/><circle cx="15.5" cy="10" r="1.6"/></svg><span class="ts">Diğer</span></button>
   </div>
 </nav>
+<div class="more-sheet" id="more-sheet" hidden lang="tr">
+  <a href="#elle"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M13.5 3.5l3 3L8 15l-4 1 1-4z"/><path d="M12 5l3 3"/></svg>Elle tasarım</a>
+  <a href="#akim"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M11 2L4 11h5l-1 7 7-9h-5z"/></svg>Akım ve menzil</a>
+  <a href="#karsilastir"><svg viewBox="0 0 20 20" aria-hidden="true"><rect x="2.5" y="4" width="6.5" height="12" rx="1.5"/><rect x="11" y="4" width="6.5" height="12" rx="1.5"/></svg>Planları karşılaştır</a>
+</div>
 
 <div class="wrap" lang="tr">
 <main class="pages">
@@ -591,6 +630,7 @@ label.chip{background:none;padding:0;border-radius:999px;font:inherit}
           <button type="button" data-view="side">Yandan</button>
         </div>
         <label class="rng" for="t_explode">Katları ayır <input type="range" id="t_explode" min="0" max="100" value="0"></label>
+        <button type="button" class="btn shot" id="t_tour"><svg viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="10" r="7.5"/><path d="M8.3 6.8l4.6 3.2-4.6 3.2z"/></svg>Tanıtım</button>
         <label class="chip" for="t_show"><input type="checkbox" id="t_show"><span>Vitrin (döndür)</span></label>
         <button type="button" class="btn shot" id="t_shot"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M3 6.5h3l1.5-2h5l1.5 2h3v9H3z"/><circle cx="10" cy="11" r="3"/></svg>Görsel kaydet</button>
         <label class="field inline" for="t_quality"><span class="lbl">Kalite</span>
@@ -599,6 +639,7 @@ label.chip{background:none;padding:0;border-radius:999px;font:inherit}
       <div class="trow">
         <span class="tlabel">Göster</span>
         <div class="chips">
+          <label class="chip" for="t_wrap"><input type="checkbox" id="t_wrap"><span>Bitmiş paket</span></label>
           <label class="chip" for="t_box"><input type="checkbox" id="t_box" checked><span>Kutu</span></label>
           <label class="chip" for="t_walls"><input type="checkbox" id="t_walls"><span>Duvarlar</span></label>
           <label class="chip" for="t_lid"><input type="checkbox" id="t_lid"><span>Kapak</span></label>
@@ -823,13 +864,14 @@ label.chip{background:none;padding:0;border-radius:999px;font:inherit}
 
 <script src="lib/three.min.js"></script>
 <script src="lib/OrbitControls.js"></script>
+<script src="lib/RGBELoader.js"></script>
 <script>
 /* ---------- 3D: seçili planın gerçek ölçülü modeli + adım adım montaj simülasyonu ---------- */
 const V3 = (() => {
   let renderer, scene, camera, controls, host, pack = null, needs = true, ok = null, fitKey = null, cur = null, curView = "iso";
   let keyLight = null, cutPlane = null, CLIP = null;
   const st = {nickel: true, box: true, labels: true, taps: false, explode: 0, bms: true, holder: false, ground: true, real: true, cut: false, solo: false, cutAx: "x", cutPos: 0.5, soloL: 0,
-    flow: false, heat: false, dims: false, walls: false, lid: false, harness: false, quality: "auto", show: false};
+    flow: false, heat: false, dims: false, walls: false, lid: false, harness: false, quality: "auto", show: false, wrap: false};
   // telefonda daha hafif çiz: düşük çözünürlük, az segment, sürekli animasyonda 30 fps
   const isMobile = !!(window.matchMedia && matchMedia("(pointer: coarse)").matches);
   // kalite: "auto" (bilgisayarda yüksek, telefonda dengeli), "high", "fast"
@@ -837,6 +879,7 @@ const V3 = (() => {
   let SEG = isMobile ? 18 : 32;
   let lastRender = 0, anim = false, flow = null, lidObj = null, lidAng = 1.9, heatCache = null;
   const LID_OPEN = 1.9;
+  let envK = 1;   // ortam ışığı yansıma gücü (gerçek stüdyo haritası daha parlak olduğu için azaltılır)
   const AX = {L: "x", H: "y", W: "z"};
   let mode = "view";                 // "view" = tam paket, "sim" = montaj simülasyonu
   let A = null;                      // animasyon kayıtları (build doldurur)
@@ -873,6 +916,10 @@ const V3 = (() => {
     panel(0, 4.9, 0.6, 6, 4.5, 3.2); panel(4.9, 1.6, 1.2, 1.4, 5, 2.4); panel(-4.9, 1.2, -1.5, 1.2, 4.5, 1.6); panel(0.8, 1.2, 4.9, 4, 1.1, 1.3); panel(-1, 0.6, -4.9, 5, 0.8, 0.9);
     const pmrem = new THREE.PMREMGenerator(renderer);
     scene.environment = pmrem.fromScene(env, 0.035).texture;
+    // kurulan uygulamada gerçek fotoğraf stüdyosu ışık haritası (HDR) yüklenir; yüklenemezse yukarıdaki stüdyo kalır
+    if (window.BATARYA_HDR && THREE.RGBELoader && Q() !== "fast"){
+      try { new THREE.RGBELoader().load(window.BATARYA_HDR, tex => { scene.environment = pmrem.fromEquirectangular(tex).texture; tex.dispose(); envK = 0.42; if (cur) build(); needs = true; }); } catch (e) {}
+    }
 
     scene.add(new THREE.HemisphereLight(0xf4f7ff, 0x2a3036, 0.32));
     keyLight = new THREE.DirectionalLight(0xfff3e4, 1.55); keyLight.position.set(0.8, 1.7, 1.2); scene.add(keyLight);
@@ -884,7 +931,7 @@ const V3 = (() => {
     controls.enableDamping = true; controls.dampingFactor = 0.08; controls.screenSpacePanning = true;
     controls.autoRotateSpeed = 1.1;
     controls.addEventListener("change", () => { needs = true; });
-    controls.addEventListener("start", () => { fly = null; });
+    controls.addEventListener("start", () => { fly = null; stopTour(); });
     applyQuality();
     if (window.ResizeObserver) new ResizeObserver(resize).observe(host); else window.addEventListener("resize", resize);
     resize();
@@ -897,11 +944,56 @@ const V3 = (() => {
       if (controls.update()) needs = true;
       if (!needs) return;
       if (isMobile && anim && now - lastRender < 32) return;
-      renderer.render(scene, camera); needs = false; lastRender = now;
+      if (fx) fx.comp.render(); else renderer.render(scene, camera);
+      needs = false; lastRender = now;
     };
     requestAnimationFrame(loop);
     return ok = true;
   }
+  // ---- yalnız bilgisayarda ve "Yüksek" kalitede: derinlik gölgesi ve metal ışıltısı ----
+  let fx = null, fxLoading = false;
+  const fxWanted = () => st.quality === "high" && !isMobile;
+  const FX_FILES = ["shaders/CopyShader.js", "postprocessing/EffectComposer.js", "postprocessing/RenderPass.js", "postprocessing/ShaderPass.js", "math/SimplexNoise.js",
+    "shaders/SSAOShader.js", "postprocessing/SSAOPass.js", "shaders/LuminosityHighPassShader.js", "postprocessing/UnrealBloomPass.js", "shaders/GammaCorrectionShader.js", "shaders/FXAAShader.js"];
+  const loadScript = src => new Promise((res, rej) => { if (document.querySelector('script[data-fx="' + src + '"]')) return res(); const el = document.createElement("script"); el.src = src; el.dataset.fx = src; el.onload = res; el.onerror = rej; document.head.appendChild(el); });
+  function stageTexture(){
+    const cv = document.createElement("canvas"); cv.width = 512; cv.height = 320;
+    const x = cv.getContext("2d"), g = x.createRadialGradient(256, 58, 20, 256, 140, 330);
+    g.addColorStop(0, "#2f3237"); g.addColorStop(0.58, "#17181b"); g.addColorStop(1, "#0e0f11"); x.fillStyle = g; x.fillRect(0, 0, 512, 320);
+    const t = new THREE.CanvasTexture(cv); t.encoding = THREE.sRGBEncoding; return t;
+  }
+  async function setupFX(){
+    if (fx || fxLoading || !fxWanted() || !renderer) return;
+    fxLoading = true;
+    try {
+      const base = window.BATARYA_APP ? "lib/fx/" : "https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/";
+      for (const f of FX_FILES) await loadScript(base + f);
+      if (!fxWanted()) return;
+      const w = host.clientWidth || 320, h = host.clientHeight || 320, pr = renderer.getPixelRatio();
+      const comp = new THREE.EffectComposer(renderer);
+      comp.setPixelRatio(pr); comp.setSize(w, h);
+      const ssao = new THREE.SSAOPass(scene, camera, w * pr, h * pr);
+      ssao.minDistance = 0.00012; ssao.maxDistance = 0.006;
+      // etiketler, cam ve çizgiler derinlik hesabına girmesin (etrafında hale oluşmasın)
+      const ro = ssao.renderOverride.bind(ssao);
+      ssao.renderOverride = (r, m, rt, cc, ca) => {
+        const hid = [];
+        scene.traverse(o => { if (o.visible && (o.isSprite || o.isLine || (o.material && !Array.isArray(o.material) && (o.material.transparent || o.material.isShadowMaterial)))){ o.visible = false; hid.push(o); } });
+        ro(r, m, rt, cc, ca); hid.forEach(o => o.visible = true);
+      };
+      const bloom = new THREE.UnrealBloomPass(new THREE.Vector2(w * pr, h * pr), 0.2, 0.35, 0.9);
+      const gamma = new THREE.ShaderPass(THREE.GammaCorrectionShader);
+      const fxaa = new THREE.ShaderPass(THREE.FXAAShader);
+      comp.addPass(ssao); comp.addPass(bloom); comp.addPass(gamma); comp.addPass(fxaa);
+      fx = {comp, ssao, fxaa};
+      scene.background = stageTexture();
+      fxTune(); resize(); if (cur) setView(curView, true);
+    } catch (e){ fx = null; }
+    finally { fxLoading = false; }
+  }
+  function dropFX(){ if (!fx) return; fx = null; if (scene && scene.background){ scene.background.dispose(); scene.background = null; } needs = true; }
+  function fxTune(){ if (fx && cur) fx.ssao.kernelRadius = Math.max(3, cur.R.d * 0.3); }
+
   // kalite ayarı: çözünürlük, yuvarlaklık (segment) ve gölge haritası
   function applyQuality(){
     if (!renderer || !keyLight) return;
@@ -910,9 +1002,11 @@ const V3 = (() => {
     SEG = q === "high" ? 40 : q === "mid" ? 22 : 16;
     const sz = q === "high" ? 2048 : 1024;
     if (keyLight.shadow.mapSize.x !== sz){ keyLight.shadow.mapSize.set(sz, sz); if (keyLight.shadow.map){ keyLight.shadow.map.dispose(); keyLight.shadow.map = null; } }
+    if (fxWanted()) setupFX(); else dropFX();
     resize();
   }
-  function resize(){ if (!renderer || !camera) return; const w = host.clientWidth || 320, h = host.clientHeight || 320; renderer.setSize(w, h, false); camera.aspect = w / h; camera.updateProjectionMatrix(); needs = true; }
+  function resize(){ if (!renderer || !camera) return;
+    if (fx){ const w = host.clientWidth || 320, h = host.clientHeight || 320, pr = renderer.getPixelRatio(); fx.comp.setPixelRatio(pr); fx.comp.setSize(w, h); fx.fxaa.uniforms.resolution.value.set(1 / (w * pr), 1 / (h * pr)); } const w = host.clientWidth || 320, h = host.clientHeight || 320; renderer.setSize(w, h, false); camera.aspect = w / h; camera.updateProjectionMatrix(); needs = true; }
 
   function tick(now){
     const dt = Math.min(0.05, Math.max(0, (now - (lastT || now)) / 1000)); lastT = now;
@@ -936,11 +1030,18 @@ const V3 = (() => {
       lidObj.visible = st.lid || lidAng < LID_OPEN - 1e-3;
     }
     if (fly){
-      fly.t = Math.min(1, fly.t + dt / 0.9);
+      fly.t = Math.min(1, fly.t + dt / (fly.dur || 0.9));
       const e = ease(fly.t), dir = fly.from.clone().lerp(fly.to, e).normalize();
-      camera.position.copy(dir.multiplyScalar(fly.d0 + (fly.d1 - fly.d0) * e));
+      const tgt = fly.tf.clone().lerp(fly.tt, e);
+      controls.target.copy(tgt);
+      camera.position.copy(tgt.add(dir.multiplyScalar(fly.d0 + (fly.d1 - fly.d0) * e)));
       controls.update(); needs = true; anim = true;
       if (fly.t >= 1) fly = null;
+    }
+    // sinematik tanıtım: sahneler arasında kamera gezinir, her sahnede kısa bekler
+    if (tour){
+      anim = true;
+      if (!fly){ tour.hold += dt; if (tour.hold >= tour.scenes[tour.i].hold) tourScene(tour.i + 1); }
     }
     if (mode === "sim" && A){
       if (sim.p < 1){
@@ -1001,6 +1102,40 @@ const V3 = (() => {
     });
     const t = new THREE.CanvasTexture(cv); t.encoding = THREE.sRGBEncoding; t.anisotropy = 4;
     return t;
+  }
+  // bitmiş paket etiketi: logo, voltaj / Ah / kWh, hücre ve dizilim (kömür zemin, royal mavi şerit, mandalina vurgu)
+  function packLabelTexture(R, pl, fw, fh){
+    const W = 1600, H = Math.round(Math.max(420, Math.min(1600, W * fh / fw)));
+    const cv = document.createElement("canvas"); cv.width = W; cv.height = H;
+    const x = cv.getContext("2d"), u = Math.min(W, H * 2.4) / 100;
+    const draw = logo => {
+      x.clearRect(0, 0, W, H);
+      x.fillStyle = "#141518"; x.fillRect(0, 0, W, H);
+      x.fillStyle = "#2f5be6"; x.fillRect(0, 0, u * 2.2, H);
+      x.fillStyle = "#ff8a1e"; x.fillRect(u * 2.2, 0, u * 0.6, H);
+      const isLi = (R.chem || "lfp") === "li", ah = pl.P * R.ah, v = R.S * R.cv, kwh = v * ah / 1000;
+      let lx = u * 6, top = H / 2 - u * 15;
+      if (logo){ const s = u * 9; x.drawImage(logo, lx, top, s, s); lx += s + u * 2.4; }
+      x.fillStyle = "#ffffff"; x.textBaseline = "alphabetic";
+      x.font = `700 ${u * 5}px "Barlow Condensed", "Arial Narrow", Arial, sans-serif`;
+      x.fillText(window.BATARYA_APP ? "KADRO TASARIM" : "BATARYA PAKETİ", lx, top + u * 5.2);
+      x.fillStyle = "#9aa0a8"; x.font = `500 ${u * 2.6}px "IBM Plex Sans", Arial, sans-serif`;
+      x.fillText(`${isLi ? "Li-ion" : "LiFePO4"} batarya paketi`, lx, top + u * 9);
+      x.fillStyle = "#ffffff"; x.font = `700 ${u * 11}px "Barlow Condensed", "Arial Narrow", Arial, sans-serif`;
+      const big = `${fmt(v, 1)} V`; x.fillText(big, u * 6, top + u * 23);
+      const bw = x.measureText(big).width;
+      x.fillStyle = "#ff8a1e"; x.fillText(`${fmt(ah)} Ah`, u * 6 + bw + u * 4, top + u * 23);
+      x.fillStyle = "#c9ced4"; x.font = `500 ${u * 3.1}px "IBM Plex Mono", monospace`;
+      x.fillText(`${R.S}S${pl.P}P · ${fmt(kwh, 2)} kWh · ${pl.used} hücre · ~${fmt(pl.used * R.wt / 1000)} kg`, u * 6, top + u * 29.5);
+      x.fillStyle = "#2f5be6"; x.fillRect(u * 6, top + u * 32, W - u * 12, u * 0.35);
+      x.fillStyle = "#7d838b"; x.font = `500 ${u * 2.2}px "IBM Plex Sans", Arial, sans-serif`;
+      x.fillText("Kısa devre yapmayın · ateşe atmayın · şarj sıcaklığı 0–45 °C", u * 6, top + u * 35.5);
+      tex.needsUpdate = true; needs = true;
+    };
+    const tex = new THREE.CanvasTexture(cv); tex.encoding = THREE.sRGBEncoding; tex.anisotropy = 8;
+    draw(null);
+    if (window.BATARYA_APP){ const im = new Image(); im.onload = () => draw(im); im.src = "simgeler/simge-192.png"; }
+    return tex;
   }
   // paketin altındaki yumuşak koyuluk (temas gölgesi): gölge kapalıyken de paket masaya otursun
   let contactCv = null;
@@ -1141,7 +1276,7 @@ const V3 = (() => {
     const qAxis = new THREE.Quaternion().setFromUnitVectors(up, axis), qNone = new THREE.Quaternion();
     const usedC = pl.Lu * R.len + (pl.Lu - 1) * R.lgap;
     const startC = R.off[o.c] + (R.usable[o.c] - usedC);
-    const gapX = st.explode * R.len * 0.9;
+    const gapX = st.wrap ? 0 : st.explode * R.len * 0.9;   // bitmiş pakette katlar ayrılmaz
     const c0 = L => startC + L * (R.len + R.lgap + gapX);
     const r = R.d / 2, capT = 0.6, nipH = Math.min(1.6, Math.max(0.8, R.d * 0.03)), T = 0.8;
     // Hücre boyu + başlığı dahil ölçülür: her hücre [c0, c0 + boy] aralığında kalır; nikel bu iki yüzeye oturur
@@ -1150,8 +1285,8 @@ const V3 = (() => {
     const [fTop, fBot] = faceNames(o);
     const plusFace = grp => grp.top === "+" ? "top" : "bot", minusFace = grp => grp.top === "-" ? "top" : "bot";
     const clip = st.cut ? CLIP : null;
-    const mat = opts => { const m = new THREE.MeshStandardMaterial(opts); if (clip) m.clippingPlanes = clip; return m; };
-    const pmat = opts => { const m = new THREE.MeshPhysicalMaterial(opts); if (clip) m.clippingPlanes = clip; return m; };
+    const mat = opts => { const m = new THREE.MeshStandardMaterial(opts); m.envMapIntensity = (opts.envMapIntensity || 1) * envK; if (clip) m.clippingPlanes = clip; return m; };
+    const pmat = opts => { const m = new THREE.MeshPhysicalMaterial(opts); m.envMapIntensity = (opts.envMapIntensity || 1) * envK; if (clip) m.clippingPlanes = clip; return m; };
     const solo = (!isSim && st.solo && pl.Lu > 1) ? Math.min(st.soloL, pl.Lu - 1) : null;
     const inL = L => solo === null || L === solo;
     const shadows = st.ground && Q() !== "fast";
@@ -1354,7 +1489,7 @@ const V3 = (() => {
     const lift = T + 1.5;
     // katlar arası baralar (bakır)
     pl.jumpers.forEach((j, k) => {
-      if (!inL(j.from.L) && !inL(j.to.L)) return;
+      if (st.wrap || (!inL(j.from.L) && !inL(j.to.L))) return;
       const ca = faceC(j.from.L, plusFace(j.from), lift), cb = faceC(j.to.L, minusFace(j.to), lift);
       const oa = out(j.from.c, 8), ob = out(j.to.c, 8);
       tube([pos(j.from.c.x, j.from.c.y, ca), pos(oa.x, oa.y, ca), pos(ob.x, ob.y, cb), pos(j.to.c.x, j.to.c.y, cb)], Math.max(2, R.d * 0.08), 0xb87333, sid["jump" + k]);
@@ -1427,7 +1562,7 @@ const V3 = (() => {
         fin.position[midD] += -bms.s[midD] / 2 + (i + 0.5) * bms.s[midD] / nf;
         addMesh(fin, sB, U * 2);
       }
-      const lb = label(`BMS ${S}S`, U, bms.fits ? "#11843c" : "#c2412d", "#ffffff", 0.9);
+      const lb = label(`BMS ${S}S`, U, bms.fits ? "#2f5be6" : "#c2412d", "#ffffff", 0.9);
       lb.position.set(bms.ctr.x, bms.ctr.y + bms.s.y / 2 + U * 0.5, bms.ctr.z - Math.min(bms.s.z / 2, U)); addSprite(lb, sB);
       bmsPad = new THREE.Vector3(bms.ctr.x, bms.ctr.y, bms.ctr.z);
       steps[sB].text = bms.fits
@@ -1535,7 +1670,7 @@ const V3 = (() => {
     }
 
     // grup ve kat etiketleri
-    if (st.labels){
+    if (st.labels && !st.wrap){
       pl.groups.forEach(grp => {
         if (!inL(grp.L)) return;
         const lb = label("S" + (grp.g + 1), U, `hsl(${hue(grp.g)},62%,58%)`, "#111111", 0.75);
@@ -1543,7 +1678,7 @@ const V3 = (() => {
       });
       if (pl.Lu > 1) pl.layers.forEach((lay, L) => {
         if (!inL(L)) return;
-        const lb = label(`Kat ${L + 1}`, U, "#11843c", "#ffffff", 0.8);
+        const lb = label(`Kat ${L + 1}`, U, "#2f5be6", "#ffffff", 0.8);
         lb.position.copy(pos(minX - r - U * 0.9, (minY + maxY) / 2, c0(L) + R.len / 2)); addSprite(lb, sid["cells" + L]);
       });
     }
@@ -1586,7 +1721,7 @@ const V3 = (() => {
         const place = v => { if (k !== "y"){ v.y = pmax.y; if (k === "x") v.z = -hz; else v.x = -hx; } else { v.x = hx; v.z = -hz; } return v; };
         const offv = k === "y" ? new V(U * 0.9, 0, -U * 0.5) : new V(0, U * 0.9, 0);
         const [a, b] = seg2(pmin[k], pmax[k]);
-        dim(place(a), place(b), offv, `blok ${fmt(pmax[k] - pmin[k], 0)} mm`, "rgba(17,132,60,.92)");
+        dim(place(a), place(b), offv, `blok ${fmt(pmax[k] - pmin[k], 0)} mm`, "rgba(47,91,230,.92)");
         const gl = pmin[k] + hh[k], gh = hh[k] - pmax[k];
         const bmsHere = sd => bms && bms.fits && bms.k === k && bms.side === sd ? " (BMS)" : "";
         if (gl > 3){ const [a2, b2] = seg2(-hh[k], pmin[k]); dim(place(a2), place(b2), offv, `${fmt(gl, 0)} mm boşluk${bmsHere(-1)}`, "rgba(184,108,12,.95)"); }
@@ -1665,6 +1800,31 @@ const V3 = (() => {
         <div class="hint">Tahmini değerlerdir: hangi hücrenin daha sıcak olduğu güvenilir, gerçek sıcaklık ±%30–50 sapabilir.</div>`;
     }
 
+    // ---- bitmiş paket: ısıyla daralan PVC ile sarılmış blok ve ön yüzde etiket ----
+    if (st.wrap){
+      const bv = Math.min(6, Math.min(pmax.x - pmin.x, pmax.y - pmin.y, pmax.z - pmin.z) * 0.08), rc = Math.min(10, Math.min(pmax.x - pmin.x, pmax.y - pmin.y) * 0.12);
+      const pad = T + 1.8 + 0.42 * Math.max(bv, rc), sx = pmax.x - pmin.x + 2 * pad, sy = pmax.y - pmin.y + 2 * pad, sz = pmax.z - pmin.z + 2 * pad;
+      const w2 = sx / 2 - bv, h2 = sy / 2 - bv, r2 = Math.min(rc, w2 * 0.9, h2 * 0.9);
+      const sh = new THREE.Shape();
+      sh.moveTo(-w2 + r2, -h2); sh.lineTo(w2 - r2, -h2); sh.quadraticCurveTo(w2, -h2, w2, -h2 + r2); sh.lineTo(w2, h2 - r2); sh.quadraticCurveTo(w2, h2, w2 - r2, h2);
+      sh.lineTo(-w2 + r2, h2); sh.quadraticCurveTo(-w2, h2, -w2, h2 - r2); sh.lineTo(-w2, -h2 + r2); sh.quadraticCurveTo(-w2, -h2, -w2 + r2, -h2);
+      const depth = Math.max(0.5, sz - 2 * bv);
+      const wg = new THREE.ExtrudeGeometry(sh, {depth, bevelEnabled: true, bevelSize: bv, bevelThickness: bv, bevelSegments: Q() === "fast" ? 2 : 5, curveSegments: Q() === "fast" ? 4 : 10});
+      wg.translate(0, 0, -depth / 2);
+      const wm = Q() !== "fast" ? pmat({color: 0x1b1d21, roughness: 0.38, metalness: 0.0, clearcoat: 1, clearcoatRoughness: 0.09}) : mat({color: 0x1b1d21, roughness: 0.4});
+      const wrapM = new THREE.Mesh(wg, wm); wrapM.position.set((pmin.x + pmax.x) / 2, (pmin.y + pmax.y) / 2, (pmin.z + pmax.z) / 2);
+      wrapM.castShadow = shadows; wrapM.receiveShadow = shadows; addMesh(wrapM, sid.done);
+      // etiket: ön yüz (+z) ve üst yüz (+y)
+      const lab = (fw, fh, p, rotX) => {
+        const lw = fw * 0.86, lh = Math.min(fh * 0.8, lw * 0.5);
+        const lm = mat({map: packLabelTexture(R, pl, lw, lh), roughness: 0.5, metalness: 0.0});
+        const m = new THREE.Mesh(new THREE.PlaneGeometry(lw, lh), lm); m.position.copy(p); m.rotation.x = rotX; addMesh(m, sid.done);
+      };
+      const c = wrapM.position;
+      lab(sx, sy, new THREE.Vector3(c.x, c.y, c.z + sz / 2 + 0.35), 0);
+      lab(sx, sz, new THREE.Vector3(c.x, c.y + sy / 2 + 0.35, c.z), -Math.PI / 2);
+    }
+
     // gölge ve zemin (tezgâh)
     const kd = new THREE.Vector3(0.55, 1.6, 0.9).normalize();
     keyLight.position.copy(kd.multiplyScalar(diag * 1.5));
@@ -1688,7 +1848,10 @@ const V3 = (() => {
 
     // animasyon kaydı
     steps.forEach(s => { s.dur = Math.min(4.2, 1.4 + s.n * 0.035); });
-    A = Object.assign(rec, {steps, sid, bodies, caps, nips, rings, ins, holders, plateSets, q: qAxis, drop: up.clone().multiplyScalar(R.len * 1.4 + U), plateDrop: R.len * 0.6, axis});
+    const topL = solo === null ? pl.Lu - 1 : solo, mx = (minX + maxX) / 2, my = (minY + maxY) / 2;
+    const midCell = allCells.reduce((b, q) => (q.L === topL && (!b || Math.hypot(q.c.x - mx, q.c.y - my) < Math.hypot(b.c.x - mx, b.c.y - my))) ? q : b, null);
+    const focus = {face: pos(mx, my, faceC(topL, "top", T)), cell: midCell ? pos(midCell.c.x, midCell.c.y, faceC(topL, "top", T)) : pos(mx, my, faceC(topL, "top", T)), bms: bmsPad ? bmsPad.clone() : null};
+    A = Object.assign(rec, {focus, steps, sid, bodies, caps, nips, rings, ins, holders, plateSets, q: qAxis, drop: up.clone().multiplyScalar(R.len * 1.4 + U), plateDrop: R.len * 0.6, axis});
     if (sim.i > steps.length - 1) sim.i = steps.length - 1;
 
     // araç çubuğu: kesit ve tek kat seçimi
@@ -1702,6 +1865,7 @@ const V3 = (() => {
       sb.querySelectorAll("button[data-l]").forEach(b => b.addEventListener("click", () => { st.soloL = +b.dataset.l; build(); }));
     }
 
+    fxTune();
     const keyNow = [pl.id, B.L, B.W, B.H].join("|");
     if (keyNow !== fitKey){ fitKey = keyNow; setView(curView, true); if (isSim){ sim.i = 0; sim.p = 1; sim.playing = false; } }
     const meta = $$("v3d-meta"); if (meta) meta.textContent = `${pl.shape} · ${o.name} · ${pl.used} hücre`;
@@ -1771,14 +1935,55 @@ const V3 = (() => {
     const perp = iso.clone().addScaledVector(ax, -iso.dot(ax)).normalize();
     return ax.multiplyScalar(sgn * 1.1).add(perp.multiplyScalar(0.75)).normalize();
   }
-  function flyTo(dir, k, instant){
+  function flyTo(dir, k, instant, target, dur){
     const {diag, D} = fitDist();
-    camera.near = diag / 200; camera.far = diag * 40; camera.updateProjectionMatrix();
-    controls.target.set(0, 0, 0);
+    camera.near = diag / 200; camera.far = diag * (fx ? 6 : 40); camera.updateProjectionMatrix();
+    const tt = target ? target.clone() : new THREE.Vector3();
     const d1 = D * k * (camera.aspect < 1 ? 1.18 : 1);   // dik telefon ekranında biraz geri çekil
-    if (instant){ fly = null; camera.position.copy(dir.clone().multiplyScalar(d1)); controls.update(); needs = true; return; }
-    fly = {from: camera.position.clone().normalize(), to: dir.clone(), d0: camera.position.length(), d1, t: 0};
+    if (instant){ fly = null; controls.target.copy(tt); camera.position.copy(tt.clone().add(dir.clone().multiplyScalar(d1))); controls.update(); needs = true; return; }
+    const rel = camera.position.clone().sub(controls.target);
+    fly = {from: rel.clone().normalize(), to: dir.clone(), d0: rel.length(), d1, t: 0, tf: controls.target.clone(), tt, dur: dur || 0.9};
   }
+
+  // ---- sinematik tanıtım ----
+  let tour = null, capEl = null;
+  function caption(t){
+    if (!capEl && host){ capEl = document.createElement("div"); capEl.className = "v3d-cap"; host.appendChild(capEl); }
+    if (!capEl) return;
+    if (t){ capEl.textContent = t; capEl.classList.toggle("on", false); void capEl.offsetWidth; capEl.classList.toggle("on", true); }
+    else capEl.classList.toggle("on", false);
+  }
+  function startTour(){
+    if (!ok || !cur || !A || mode === "sim") return;
+    const F = A.focus, dTop = dirFor("facetop"), side = new THREE.Vector3(1, 0.35, 0.4).normalize();
+    const close = dTop.clone().add(side.clone().multiplyScalar(0.6)).normalize();
+    const scenes = [
+      {cap: "Paket", dir: dirFor("iso"), k: 0.78, tgt: null, dur: 1.3, hold: 1.1},
+      {cap: "Hücreler ve nikel şeritler", dir: dTop, k: 0.4, tgt: F.face, dur: 1.9, hold: 1.7},
+      {cap: "Punta kaynak noktaları", dir: close, k: 0.17, tgt: F.cell, dur: 1.8, hold: 1.7},
+    ];
+    if (F.bms) scenes.push({cap: "BMS ve bağlantılar", dir: dirFor("iso"), k: 0.3, tgt: F.bms, dur: 1.9, hold: 1.7});
+    scenes.push({cap: "Bitmiş paket", dir: new THREE.Vector3(1.15, 0.7, 1.25).normalize(), k: 0.74, tgt: null, dur: 2.0, hold: 1.4, wrap: true});
+    st.show = false; const sh = $$("t_show"); if (sh) sh.checked = false;
+    tour = {scenes, i: 0, hold: 0};
+    tourScene(0);
+  }
+  // tanıtım sırasında yazı etiketleri gizlenir (yakın çekimler temiz görünsün)
+  const tourLabels = on => { if (pack) pack.traverse(o => { if (o.isSprite) o.visible = on; }); needs = true; };
+  function tourScene(i){
+    if (!tour) return;
+    if (i >= tour.scenes.length){
+      tour = null; caption(null); tourLabels(true);
+      st.show = true; const sh = $$("t_show"); if (sh) sh.checked = true;   // sonunda vitrin gibi dönmeye devam
+      return;
+    }
+    const sc = tour.scenes[i]; tour.i = i; tour.hold = 0;
+    if (sc.wrap && !st.wrap){ st.wrap = true; const w = $$("t_wrap"); if (w) w.checked = true; build(); }
+    tourLabels(false);
+    caption(sc.cap);
+    flyTo(sc.dir, sc.k, false, sc.tgt, sc.dur);
+  }
+  function stopTour(){ if (tour){ tour = null; caption(null); tourLabels(true); } }
   function setView(v, instant){
     curView = v;
     document.querySelectorAll(".v3d-tools .trow .seg button[data-view]").forEach(b => b.classList.toggle("on", b.dataset.view === v));
@@ -1836,13 +2041,13 @@ const V3 = (() => {
 
   function bindUI(){
     document.querySelectorAll(".v3d-tools .trow .seg button[data-view]").forEach(b => b.addEventListener("click", () => setView(b.dataset.view)));
-    const toggles = [["t_nickel", "nickel"], ["t_box", "box"], ["t_labels", "labels"], ["t_taps", "taps"], ["t_bms", "bms"], ["t_holder", "holder"], ["t_shadow", "ground"], ["t_realcell", "real"], ["t_show", "show"], ["t_cut", "cut"], ["t_solo", "solo"],
+    const toggles = [["t_nickel", "nickel"], ["t_box", "box"], ["t_labels", "labels"], ["t_taps", "taps"], ["t_bms", "bms"], ["t_holder", "holder"], ["t_shadow", "ground"], ["t_realcell", "real"], ["t_show", "show"], ["t_wrap", "wrap"], ["t_cut", "cut"], ["t_solo", "solo"],
       ["t_flow", "flow"], ["t_heat", "heat"], ["t_dims", "dims"], ["t_walls", "walls"], ["t_lid", "lid"], ["t_harness", "harness"]];
     toggles.forEach(([id, k]) => {
       const el = $$(id); if (!el) return; st[k] = el.checked;
       el.addEventListener("change", () => {
         st[k] = el.checked;
-        if (k === "show"){ needs = true; return; }              // vitrin: sadece döndürme, yeniden çizmeye gerek yok
+        if (k === "show"){ if (st.show) stopTour(); needs = true; return; }              // vitrin: sadece döndürme, yeniden çizmeye gerek yok
         if (k === "lid" && st.lid) lidAng = LID_OPEN;          // kapak açık başlar, kapanarak gelir
         if (k === "lid" && !st.lid && lidObj){ needs = true; return; }   // açılarak kaybolur, yeniden çizmeye gerek yok
         if (ok && cur) build();
@@ -1853,6 +2058,7 @@ const V3 = (() => {
     const qs = $$("t_quality");
     if (qs){ st.quality = qs.value; qs.addEventListener("change", () => { st.quality = qs.value; if (ok){ applyQuality(); if (cur) build(); } }); }
     // görsel kaydet: yalnız kurulan uygulamada (Claude içindeki görüntüleyici dosya indirmeye izin vermez)
+    const tb = $$("t_tour"); if (tb) tb.addEventListener("click", () => { if (tour) stopTour(); else startTour(); });
     const shot = $$("t_shot"); if (shot){ shot.hidden = !window.BATARYA_APP; shot.addEventListener("click", () => snapshot(shot)); }
     const hb0 = $$("heat-bar"); if (hb0) hb0.hidden = !st.heat;
     ["h_ir", "h_amb", "h_box"].forEach(id => {
@@ -1894,12 +2100,12 @@ const V3 = (() => {
       const cv = document.createElement("canvas"); cv.width = W; cv.height = H + band;
       const g = cv.getContext("2d");
       const bg = g.createRadialGradient(W / 2, H * 0.22, W * 0.05, W / 2, H * 0.45, W * 0.8);
-      bg.addColorStop(0, "#2e363e"); bg.addColorStop(1, "#0f1215"); g.fillStyle = bg; g.fillRect(0, 0, W, H);
+      bg.addColorStop(0, "#2f3237"); bg.addColorStop(1, "#0e0f11"); g.fillStyle = bg; g.fillRect(0, 0, W, H);
       g.drawImage(renderer.domElement, 0, 0, W, H);
       renderer.setPixelRatio(pr); renderer.setSize(sz.x, sz.y, false); camera.aspect = asp; camera.updateProjectionMatrix(); needs = true;
       // alt bilgi şeridi
       g.fillStyle = "#0b0e10"; g.fillRect(0, H, W, band);
-      g.fillStyle = "#13d64b"; g.fillRect(0, H, W, Math.max(3, band * 0.05));
+      g.fillStyle = "#ff8a1e"; g.fillRect(0, H, W, Math.max(3, band * 0.05));
       const pad = band * 0.32, fs = band * 0.34;
       let x0 = pad;
       if (window.BATARYA_APP){
@@ -1971,6 +2177,19 @@ const pageShown = p => { const el = document.querySelector(`.page[data-page="${p
 
 function num(id){ const v = parseFloat(String($(id).value).replace(",", ".")); return isFinite(v) ? v : 0; }
 function fmt(n, k=1){ return n.toLocaleString("tr-TR", {maximumFractionDigits:k, minimumFractionDigits:0}); }
+// paket değerleri değişince sayılar eski değerden yenisine akarak gelsin
+const lastNums = {};
+function countUp(root){
+  const reduce = window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches;
+  root.querySelectorAll(".num").forEach((el, i) => {
+    const to = parseFloat(el.dataset.v), k = +el.dataset.k || 1, from = lastNums[i];
+    lastNums[i] = to;
+    if (reduce || from === undefined || !isFinite(from) || Math.abs(from - to) < 1e-9) return;
+    const t0 = performance.now(), dur = 520;
+    const step = now => { const t = Math.min(1, (now - t0) / dur), e = 1 - Math.pow(1 - t, 3); el.textContent = fmt(from + (to - from) * e, k); if (t < 1 && el.isConnected) requestAnimationFrame(step); };
+    requestAnimationFrame(step);
+  });
+}
 function fmtTime(min){ const m = Math.round(min); const h = Math.floor(m/60); return h ? `${h} sa ${m%60} dk` : `${m} dk`; }
 function hue(g){ return (g * 137.508) % 360; }
 function gColor(g){ return `hsl(${hue(g)} 70% 62%)`; }
@@ -2345,7 +2564,7 @@ function layerPickHTML(R, rec, tek, sel, perMax){
       <span class="lp-sub">${p.Lu === 1 ? "tek kat" : p.Lu + " kat"} · ${p.shape} · ~${fmtTime(p.total)}</span>${extra}</button>`;
   const jig = !rec.grid.hex;   // önerilen plan kare ızgaralı mı (kare ızgara yoksa petek önerilmiş olabilir)
   let h = `<div class="lp-head"><h2>Düz mü, katlı mı?</h2><span>${jig ? "İkisi de kare jig'e dizilir. " : ""}Önerilen plan yukarıda; tek kat isterseniz diğerine dokunun.</span></div><div class="lp-opts">`;
-  h += card(rec, "Katlı", `<span class="pill good">önerilen</span>`, jig ? `<span class="lp-diff">Her kat jig'de ayrı dizilir, sonra katlar birleştirilir.</span>` : "");
+  h += card(rec, "Katlı", `<span class="pill hot">önerilen</span>`, jig ? `<span class="lp-diff">Her kat jig'de ayrı dizilir, sonra katlar birleştirilir.</span>` : "");
   if (tek){
     const dT = rec.total - tek.total;
     h += card(tek, "Düz (tek kat)", "", `<span class="lp-diff">${fmt((rec.P - tek.P) * R.ah)} Ah daha az · işçilik ~${fmtTime(Math.abs(dT))} daha ${dT >= 0 ? "kısa" : "uzun"}</span>`);
@@ -2463,7 +2682,7 @@ function render(){
   const maxT = Math.max(...shown.map(p => p.total));
   $("plans").innerHTML = shown.map((p, i) => {
     const dt = p.total - best.total;
-    const tag = i === 0 ? `<span class="pill good">${pWant === recP ? "Önerilen" : "En uygun"}</span>`
+    const tag = i === 0 ? `<span class="pill hot">${pWant === recP ? "Önerilen" : "En uygun"}</span>`
       : `<span class="delta">${dt < 0 ? "−" : "+"}${fmtTime(Math.abs(dt))}</span>` + (p === fastest ? ` <span class="pill mid">en kısa süre</span>` : "");
     const barColor = p.custom ? "var(--bad)" : (i === 0 ? "var(--good)" : "var(--accent)");
     const inCmp = cmpSel.some(c => c.P === pWant && c.id === p.id);
@@ -2495,10 +2714,10 @@ function render(){
     <div class="plate-body">
       <div class="cfg" aria-label="${R.S} seri ${P} paralel"><span>${R.S}S</span><span class="p">${P}P</span></div>
       <dl class="kv">
-        <div><dt>Nominal</dt><dd>${fmt(vNom,1)}<small> V</small></dd></div>
-        <div><dt>Kapasite</dt><dd>${fmt(P*R.ah)}<small> Ah</small></dd></div>
-        <div><dt>Enerji</dt><dd>${fmt(R.S*R.cv*P*R.ah/1000,2)}<small> kWh</small></dd></div>
-        <div><dt>Şarj / boş</dt><dd>${fmt(R.S*C.full,1)}<small> / ${fmt(R.S*C.empty,1)} V</small></dd></div>
+        <div><dt>Nominal</dt><dd><span class="num" data-v="${vNom}" data-k="1">${fmt(vNom,1)}</span><small> V</small></dd></div>
+        <div><dt>Kapasite</dt><dd><span class="num" data-v="${P*R.ah}" data-k="1">${fmt(P*R.ah)}</span><small> Ah</small></dd></div>
+        <div><dt>Enerji</dt><dd><span class="num" data-v="${R.S*R.cv*P*R.ah/1000}" data-k="2">${fmt(R.S*R.cv*P*R.ah/1000,2)}</span><small> kWh</small></dd></div>
+        <div><dt>Şarj / boş</dt><dd><span class="num" data-v="${R.S*C.full}" data-k="1">${fmt(R.S*C.full,1)}</span><small> / ${fmt(R.S*C.empty,1)} V</small></dd></div>
       </dl>
     </div>
     <div class="plate-foot">
@@ -2507,6 +2726,7 @@ function render(){
       <span>~<b>${fmt(P*R.ah*R.crate,0)}</b> A sürekli</span>
       <span>Tahmini işçilik <b>${fmtTime(sel.total)}</b></span>
     </div>${tightNote(R, sel)}`;
+  countUp($("plate"));
 
   document.querySelectorAll(".pb-text").forEach(e => e.innerHTML = `Seçili plan: <b>${sel.shape}</b> · ${sel.grid.o.name} · ${R.S}S${pWant}P · ${fmt(pWant*R.ah)} Ah · tahmini ${fmtTime(sel.total)}`);
   calcCtx = {R, P: pWant, pl: sel};
@@ -3662,6 +3882,9 @@ function route(want){
   if (!PAGES.includes(p)) p = "hesap";
   document.querySelectorAll(".page").forEach(el => { el.hidden = el.dataset.page !== p; });
   document.querySelectorAll(".tabs a").forEach(a => { const on = a.dataset.page === p; a.classList.toggle("on", on); if (on) a.setAttribute("aria-current", "page"); else a.removeAttribute("aria-current"); });
+  const mb = $("more-btn"), ms = $("more-sheet");
+  if (mb){ mb.classList.toggle("on", ["elle", "akim", "karsilastir"].includes(p)); mb.setAttribute("aria-expanded", "false"); }
+  if (ms){ ms.hidden = true; ms.querySelectorAll("a").forEach(a => a.classList.toggle("on", a.getAttribute("href") === "#" + p)); }
   const act = document.querySelector(".tabs a.on"); if (act && act.scrollIntoView) act.scrollIntoView({block: "nearest", inline: "center"});
   if (p === "sema" && detailDirty && lastDetail) renderDetail(...lastDetail);
   if (p === "karsilastir") renderCompare();
@@ -3682,6 +3905,13 @@ document.addEventListener("click", e => {
   route(p);
   try { if (location.hash !== "#" + p) history.replaceState(null, "", "#" + p); } catch (err) {}
 });
+// telefon: "Diğer" paneli
+$("more-btn").addEventListener("click", e => { e.stopPropagation(); const ms = $("more-sheet"); ms.hidden = !ms.hidden; $("more-btn").setAttribute("aria-expanded", String(!ms.hidden)); });
+document.addEventListener("click", e => { const ms = $("more-sheet"); if (!ms.hidden && !e.target.closest("#more-sheet") && !e.target.closest("#more-btn")) ms.hidden = true; });
+// Android: düğmelere dokununca hafif titreşim
+if (navigator.vibrate && window.matchMedia && matchMedia("(pointer: coarse)").matches){
+  document.addEventListener("click", e => { if (e.target.closest("button, .chip, .tabs a, .more-sheet a, .lp-opt, #plans tr")){ try { navigator.vibrate(8); } catch (err) {} } }, true);
+}
 route();
 </script>
 

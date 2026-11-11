@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="tr">
 <head>
-<meta name="app-ver" content="86a50676ac">
+<meta name="app-ver" content="b412a47295">
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#07080c">
@@ -671,9 +671,6 @@ body::before{background:#07080c}
 .h-ticks{fill:none;stroke:rgba(143,176,255,.5);stroke-width:8;stroke-dasharray:1.5 9.5}
 .h-track{fill:none;stroke:rgba(255,255,255,.07);stroke-width:14}
 .h-arc{fill:none;stroke:url(#hg);stroke-width:14;stroke-linecap:round;stroke-dasharray:597;transform:rotate(-90deg);transform-origin:113px 113px;transition:stroke-dashoffset 1.3s cubic-bezier(.2,.8,.2,1);filter:drop-shadow(0 0 9px rgba(255,143,31,.85))}
-.h-orbit{position:absolute;inset:-6px;animation:hSpin 7s linear infinite}
-.h-orbit i{position:absolute;left:50%;top:0;width:8px;height:8px;margin-left:-4px;border-radius:50%;background:#fff;box-shadow:0 0 14px 4px var(--glow)}
-@keyframes hSpin{to{transform:rotate(360deg)}}
 .h-core{position:relative;text-align:center}
 .h-big{font:700 86px/.84 var(--f-display);font-variant-numeric:tabular-nums;background:linear-gradient(180deg,#fff 30%,#ffd9ad 70%,#ff8f1f);-webkit-background-clip:text;background-clip:text;color:transparent;filter:drop-shadow(0 0 20px rgba(255,143,31,.4))}
 .h-big.long{font-size:64px}
@@ -727,7 +724,7 @@ body::before{background:#07080c}
   body{padding-bottom:calc(92px + env(safe-area-inset-bottom,0px))}
   .more-sheet:not([hidden]){bottom:calc(88px + env(safe-area-inset-bottom,0px));border-radius:22px;border-color:rgba(143,176,255,.26)}
 }
-.lite .glowbg .aur,.lite .h-orbit,.lite .lp-opt.on .lp-thumb circle{animation:none}
+.lite .glowbg .aur,.lite .lp-opt.on .lp-thumb circle{animation:none}
 .lite .plate::after{display:none}
 .lite .tabs{-webkit-backdrop-filter:none;backdrop-filter:none;background:rgba(12,14,26,.96)}
 .lite .h-arc{filter:none}
@@ -3318,7 +3315,6 @@ function render(){
           <circle class="h-ticks" cx="113" cy="113" r="108"/><circle class="h-track" cx="113" cy="113" r="95"/>
           <circle class="h-arc" id="h-arc" cx="113" cy="113" r="95" style="stroke-dashoffset:${(597 * (1 - lastFill)).toFixed(1)}"/>
         </svg>
-        <div class="h-orbit"><i></i></div>
         <div class="h-core"><div class="h-big${fmt(P*R.ah).length > 3 ? " long" : ""}"><span class="num" data-v="${P*R.ah}" data-k="1">${fmt(P*R.ah)}</span></div><div class="h-unit">Ah</div><div class="h-cfg">${R.S}S ${P}P · %${fillPct}</div></div>
       </div>
       <dl class="kv">

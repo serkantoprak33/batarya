@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="tr">
 <head>
-<meta name="app-ver" content="10744f2054">
+<meta name="app-ver" content="e3e3161ee6">
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#07080c">
@@ -1135,12 +1135,6 @@ body::before{background:#07080c}
       </div>
     </div>
     <div class="hint" style="margin-top:10px">Tahmini değerlerdir. Şerit akımı, seçili planda iki grup arasında karşı karşıya duran her hücre çiftine bir şerit konduğu varsayımıyla hesaplanır; en az çiftin olduğu geçiş esas alınır. Menzil; rüzgâr, eğim, sürücü ağırlığı ve sıcaklıkla ±%30 değişebilir.</div>
-  </section>
-
-  <section class="block" id="kk-block">
-    <div class="bhead"><h2>Kasa kırıcı</h2><span class="meta" id="kk-meta">Tek arıza testi</span></div>
-    <div class="hint" style="margin:-4px 0 12px">Uygulama kendi planını kırmaya çalışır: her kaynağı, her hücreyi ve her bağlantıyı sırayla bozar, paketin buna dayanıp dayanmadığına bakar. En zayıf halka en üstte.</div>
-    <div id="kk-out"></div>
   </section>
 
   <section class="block" id="tm-block">
@@ -3330,12 +3324,14 @@ function updateCalc(){
   if (TM) TM.update();
 }
 
-/* ---------- Kasa kırıcı: tek arıza testi ----------
-   Her kaynak, hücre, bara ve balans kablosu sırayla bozulur; paketin sürekli akımda buna dayanıp dayanmadığına bakılır.
+/* ---------- Kasa kırıcı: dizilim testi (Şema sayfası) ----------
+   Yalnız dizilime bağlı olaylar denenir: ölçü şaşması, seri geçişte kopan bağlantı, kat arası bara, içte kalan balans noktası.
    Yalnız aritmetik: 3D'ye ve zaman makinesine yük getirmez. sev: 3 paket durur / tehlike, 2 aşırı yük, 1 kayıp, 0 dayanır. */
+let kkCtx = null;
 function renderKK(c){
-  const out = $("kk-out"); if (!out) return;
-  if (!c || !c.pl){ out.innerHTML = c ? `<div class="hint">Tek arıza testi için önce “Kutu hesabı” sekmesinde bir plan seçin.</div>` : ""; $("kk-meta").textContent = "Tek arıza testi"; return; }
+  kkCtx = c;
+  const out = $("kk-out"), meta = $("kk-meta"); if (!out || !meta) return;
+  if (!c || !c.pl){ out.innerHTML = c ? `<div class="hint">Dizilim testi için önce “Kutu hesabı” sekmesinde bir plan seçin.</div>` : ""; meta.textContent = "Dizilim testi"; return; }
   const {R, P, pl, I, links, cap, need, cellMax, km} = c, S = pl.S;
   const gname = x => `S${x.a.g + 1}→S${x.b.g + 1}`;
   const rows = [];
@@ -3357,28 +3353,29 @@ function renderKK(c){
   const nJ = pl.jumpers.length;
   if (nJ) rows.push({sev: 3, tag: "Paket durur", title: `Kat arası bağlantı koparsa (${nJ} adet)`, txt: `Bütün akım (${fmt(I, 0)} A) bu ${nJ > 1 ? "baraların her birinden" : "baradan"} geçer; yedeği yoktur. Gevşerse önce ısınır, koparsa paket çıkış vermez.`, fix: `Barayı iki noktadan bağlayın (çift cıvata ya da iki ayrı kablo) ve bağlantıyı titreşime karşı sabitleyin.`});
 
-  // 3) bir hücre devre dışı kalır (içi açılır ya da kaynağı kopar)
-  if (P <= 1) rows.push({sev: 3, tag: "Paket durur", title: `Herhangi bir hücre devre dışı kalırsa`, txt: `Her grupta tek hücre var; biri açılırsa seri yol kesilir.`, fix: `Paralel sayısını (P) artırın.`});
-  else {
-    const Ic = I / (P - 1), lost = 100 / P, title = `Herhangi bir grupta bir hücre devre dışı kalırsa`;
-    const capTxt = `Paket ${fmt(P * R.ah, 1)} Ah yerine <b>${fmt((P - 1) * R.ah, 1)} Ah</b> verir (menzil ≈ ${fmt(km, 0)} → ${fmt(km * (P - 1) / P, 0)} km, −%${fmt(lost, 0)}); o grup hep önce boşalır.`;
-    if (Ic > cellMax * 1.001) rows.push({sev: 2, tag: "Aşırı yük", title, txt: `O gruptaki kalan ${P - 1} hücre <b>${fmt(Ic, 1)} A</b> çeker; hücrenin sürekli sınırı ${fmt(cellMax, 1)} A (%${fmt(Ic / cellMax * 100, 0)}). ${capTxt}`, fix: `Sürekli akımı ${fmt((P - 1) * cellMax, 0)} A altında tutun ya da P'yi artırın.`});
-    else rows.push({sev: 1, tag: "Kapasite düşer", title, txt: `Kalan ${P - 1} hücre ${fmt(Ic, 1)} A çeker; sınırın (${fmt(cellMax, 1)} A) içinde. ${capTxt}`, fix: `Grup gerilimlerini arada bir ölçün; hep aynı grup düşükse o grupta ölü hücre vardır.`});
-  }
+  // 3) ölçü şaşarsa: her yönde kalan pay, o yöndeki hücre sayısına bölünür
+  const cellsAll = pl.layers.flatMap(l => l.flatMap(x => x.cells));
+  const cnt = arr => new Set(arr.map(v => Math.round(v * 2))).size;
+  const nAx = [cnt(cellsAll.map(q => q.x)), cnt(cellsAll.map(q => q.y)), pl.Lu];
+  planSlack(R, pl).forEach(([dim, sl], i) => {
+    const n = Math.max(1, nAx[i]), dn = DIM_NAMES[dim].toLowerCase(), stack = i === 2;
+    const tol = Math.max(0, sl) / n, what = stack ? "Hücre boyu" : "Hücre çapı";
+    const extra = n > 1 ? ` ${stack ? "Katlar" : "Hücreler"} arasına ${fmt(Math.max(0, sl) / (n - 1), 1)} mm'den kalın ${stack ? "yalıtım ya da bara" : "tutucu ya da yalıtım"} girerse de sığmaz.` : "";
+    const title = `${what} ${fmt(tol, 2)} mm büyük çıkarsa ya da kutu ${fmt(Math.max(0, sl), 1)} mm dar gelirse`;
+    const txt = `${DIM_NAMES[dim]} yönünde ${n} ${stack ? "kat üst üste" : "hücre yan yana"}; toplam pay <b>${fmt(Math.max(0, sl), 1)} mm</b> (kenar boşluğu hariç).${extra}`;
+    if (tol < 0.15) rows.push({sev: 3, tag: "Sığmaz", title, txt: `${dn.charAt(0).toLocaleUpperCase("tr") + dn.slice(1)} yönünde dizilim kutuya girmez. ${txt}`, fix: `Dizmeden önce ${n} ${stack ? "katı üst üste" : "hücreyi yan yana"} koyup kumpasla ölçün; kutunun iç ölçüsünü de ölçün.`});
+    else if (tol < 0.5) rows.push({sev: 2, tag: "Sıkı", title, txt: `${dn.charAt(0).toLocaleUpperCase("tr") + dn.slice(1)} yönünde dizilim kutuya girmez. ${txt}`, fix: `Hücre ölçüsü üreticiye göre birkaç onda bir milim oynar; elinizdeki hücreyi ölçüp “Hücre” bölümüne gerçek değeri yazın.`});
+    else rows.push({sev: 0, tag: "Rahat", title, txt: `${dn.charAt(0).toLocaleUpperCase("tr") + dn.slice(1)} yönünde ancak o zaman sığmaz. ${txt}`});
+  });
 
-  // 4) bir hücre içten kısa devre olur: aynı gruptaki öbür hücreler ona boşalır
-  const cd = cellData(R), Isc = R.cv / (cd.irDC / 1000);
-  if (P > 1) rows.push({sev: 3, tag: "Yangın riski", title: `Bir hücre içten kısa devre olursa`, txt: `Aynı gruptaki öbür ${P - 1} hücre ona boşalır: kabaca hücre başına ${fmt(Isc, 0)} A, toplam <b>≈ ${fmt(Isc * (P - 1), 0)} A</b> (hücre sınırının ${fmt(Isc / cellMax, 0)} katı). Şerit sigorta gibi kopmazsa hücre tutuşabilir. P büyüdükçe bu akım büyür.`, fix: `Hücre başına sigorta teli ya da sigortalı şerit kullanın; BMS bu arızayı kesemez, çünkü akım grubun içinde döner.`});
-  else rows.push({sev: 1, tag: "Gerilim düşer", title: `Bir hücre içten kısa devre olursa`, txt: `O grup 0 V'a iner, paket gerilimi bir grup kadar düşer (${fmt((S - 1) * R.cv, 1)} V). Ona boşalacak paralel hücre yok.`});
-
-  // 5) balans kablosu
-  rows.push({sev: 1, tag: "Koruma kalkar", title: `Bir balans kablosu koparsa`, txt: `BMS o grubun gerilimini göremez. İyi BMS paketi kapatır; ucuz BMS çalışmaya devam eder ve o grup aşırı şarja ya da derin deşarja korumasız kalır.${pl.balHard ? ` Bu planda <b>${pl.balHard} balans noktası</b> içeride kalıyor; lehimi zor olduğu için kopma olasılığı daha yüksek.` : ""}`, fix: `Balans kablolarını silikonla sabitleyin; kablo kopunca kapanan (açık devre algılayan) BMS seçin.`});
+  // 4) balans noktası içeride kalıyorsa
+  if (pl.balHard) rows.push({sev: 1, tag: "Zor erişim", title: `İçte kalan balans noktasına kablo ulaşmazsa (${pl.balHard} nokta)`, txt: `Bu dizilimde ${pl.balHard} grubun balans noktası kenara çıkmıyor; kablo hücrelerin arasından geçmek zorunda.`, fix: `Kabloyu şerit kaynatılmadan önce yerleştirin ya da grupları kenara değecek şekilde dizin.`});
 
   rows.sort((a, b) => b.sev - a.sev);
   const nStop = rows.filter(r => r.sev === 3).length, nOver = rows.filter(r => r.sev === 2).length, nLoss = rows.filter(r => r.sev === 1).length, nOk = rows.filter(r => r.sev === 0).length;
-  const points = links.reduce((s, x) => s + x.k, 0) + nJ + 2 * pl.used + S + 1;
+  const points = links.reduce((s, x) => s + x.k, 0) + nJ + 3 + pl.balHard;
   const top = rows[0];
-  const head = `<div class="verdict ${top.sev >= 2 ? "bad" : "good"}"><span><b>En zayıf halka:</b> ${top.title.charAt(0).toLocaleLowerCase("tr") + top.title.slice(1)} → ${top.tag.toLocaleLowerCase("tr")}. ${fmt(points, 0)} ayrı arıza noktası denendi (${fmt(I, 0)} A sürekli akımda): ${[[nStop, "tür arıza paketi durdurur ya da tehlikelidir"], [nOver, "tür aşırı yükler"], [nLoss, "türünde paket kayıpla çalışır"], [nOk, "türüne dayanır"]].filter(x => x[0]).map(x => x.join(" ")).join(", ")}.</span></div>`;
+  const head = `<div class="verdict ${top.sev >= 2 ? "bad" : "good"}"><span><b>${top.sev >= 2 ? "En zayıf nokta" : "Dizilim sağlam"}:</b> ${top.sev >= 2 ? top.title.charAt(0).toLocaleLowerCase("tr") + top.title.slice(1) + " → " + top.tag.toLocaleLowerCase("tr") + "." : "denenen hiçbir tek olay bu dizilimi bozmuyor."} ${fmt(points, 0)} nokta denendi (${fmt(I, 0)} A sürekli akımda): ${[[nStop, "durumda olmaz"], [nOver, "durumda sınırda"], [nLoss, "durumda zorlaşır"], [nOk, "durumda sorun yok"]].filter(x => x[0]).map(x => x.join(" ")).join(", ")}.</span></div>`;
 
   // zincir: gruplar halka, seri geçişler çizgi (kalınlık = yol sayısı), kat arası bara kesik çizgi, en zayıf geçiş kırmızı
   const n0 = pl.layers[0].length, per = pl.layers.every(l => l.length === n0) && n0 <= 10 ? n0 : Math.min(8, S), nRow = Math.ceil(S / per), dx = 40, dy = 46, x0 = 30, y0 = 30, W = x0 * 2 + (per - 1) * dx, H = y0 * 2 + (nRow - 1) * dy;
@@ -3398,8 +3395,8 @@ function renderKK(c){
 
   const pill = s => s === 3 ? "bad" : s === 2 ? "warm" : s === 1 ? "mid" : "good";
   out.innerHTML = head + chain + `<div class="kk-list">` + rows.map(r => `<div class="kk-item s${r.sev}"><div class="kh"><span class="pill ${pill(r.sev)}">${r.tag}</span><b>${r.title}</b></div><div>${r.txt}</div>${r.fix ? `<div class="fix">Çare: ${r.fix}</div>` : ""}</div>`).join("") + `</div>
-    <div class="hint" style="margin-top:10px">Her seferinde tek arıza denenir; sürekli akım, şerit ve hücre değerleri yukarıdaki “Nikel şerit ve kablo” bölümünden alınır. Kısa devre akımı hücre iç direncinden kaba bir tahmindir.</div>`;
-  $("kk-meta").textContent = `${S}S${P}P · ${fmt(points, 0)} arıza noktası`;
+    <div class="hint" style="margin-top:10px">Her seferinde tek olay denenir. Sürekli akım ve şerit değerleri “Akım ve menzil” sekmesinden alınır.</div>`;
+  meta.textContent = `${S}S${P}P · ${fmt(points, 0)} nokta denendi`;
 }
 
 /* ---------- Sıkı sığma uyarısı ---------- */
@@ -4499,6 +4496,7 @@ function renderDetail(R, pl, plans){
     `</table></details>`;
 
   // kat yerleşimi (yan görünüş)
+  h += `<div class="sub" id="kk-block"><h3>Kasa kırıcı <span class="pill mid" id="kk-meta">Dizilim testi</span></h3><div class="hint" style="margin:-4px 0 10px">Uygulama bu dizilimi kırmaya çalışır: “şu olursa olmaz” diye tek tek dener. En zayıf nokta en üstte.</div><div id="kk-out"></div></div>`;
   h += `<div class="sub"><h3>Katların yerleşimi</h3><figure class="viz">${stackSVG(R, pl)}</figure></div>`;
 
   // lejant
@@ -4528,6 +4526,7 @@ function renderDetail(R, pl, plans){
   h += `<section class="layer"><div class="lhead"><h3>Montaj adımları</h3></div>${stepsHTML(R, pl)}</section>`;
   h += `<section class="layer"><div class="lhead"><h3>Malzeme listesi</h3></div>${materialsHTML(R, pl)}</section>`;
   $("detail").innerHTML = h;
+  if (kkCtx && kkCtx.pl === pl) renderKK(kkCtx);   // şema yeniden çizilince dizilim testi de geri gelsin
   detailDirty = false;
 }
 

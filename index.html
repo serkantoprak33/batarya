@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="tr">
 <head>
-<meta name="app-ver" content="e3e3161ee6">
+<meta name="app-ver" content="86a50676ac">
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#07080c">
@@ -644,9 +644,98 @@ body::before{background:#07080c}
   .glowbg .n2{opacity:.12}
 }
 
-</style>
+/* ===== Gösterişli görünüm: canlı zemin, halkalı sonuç kartı, ölçü kapsülleri, plan resimleri, yüzen menü =====
+   Hafif kalsın diye: bulanık cam yalnız alt menüde; hareketler dönüşüm/opaklık; zayıf cihazda (.lite) hareket kapanır. */
+.glowbg{background:#05060a}
+.glowbg svg{display:none}
+.glowbg .aur{position:absolute;border-radius:50%;filter:blur(70px);will-change:transform;animation:aurDrift 16s ease-in-out infinite alternate}
+.glowbg .aur.a{width:46vmax;height:46vmax;left:-16vmax;top:-18vmax;background:#2b4ceb;opacity:.55}
+.glowbg .aur.b{width:36vmax;height:36vmax;right:-16vmax;top:30vh;background:#1b2fa8;opacity:.45;animation-duration:21s;animation-delay:-7s}
+.glowbg .aur.c{width:34vmax;height:34vmax;left:22vw;bottom:-25vmax;background:#ff8f1f;opacity:.18;animation-duration:24s}
+@keyframes aurDrift{to{transform:translate(4vmax,3vmax) scale(1.15)}}
+.glowbg .floor{position:absolute;left:-50%;right:-50%;bottom:-40px;height:36vh;transform:perspective(420px) rotateX(64deg);opacity:.38;
+  background:linear-gradient(rgba(61,107,255,.4) 1px,transparent 1px) 0 0/100% 34px,linear-gradient(90deg,rgba(61,107,255,.4) 1px,transparent 1px) 0 0/34px 100%;
+  -webkit-mask-image:linear-gradient(transparent,#000 70%);mask-image:linear-gradient(transparent,#000 70%)}
+.brand-name{background:linear-gradient(180deg,#fff 20%,#8d9bc4);-webkit-background-clip:text;background-clip:text;color:transparent;letter-spacing:.08em}
+.block,.sheet,.lpick{border-radius:22px;box-shadow:inset 0 1px 0 rgba(255,255,255,.07),var(--shadow)}
 
-<div class="glowbg" aria-hidden="true"><svg viewBox="0 0 1440 900" preserveAspectRatio="none"><path class="n2" d="M-60 760 C 260 940, 470 210, 760 360 S 1250 820, 1500 150"/><path class="n1" d="M-60 760 C 260 940, 470 210, 760 360 S 1250 820, 1500 150"/><path class="n3" d="M-80 230 C 300 120, 640 520, 980 470 S 1360 260, 1520 330"/></svg></div>
+/* halkalı sonuç kartı */
+.plate{position:relative;border-radius:26px;border:0;background:linear-gradient(160deg,rgba(40,52,110,.52),rgba(10,12,22,.86));box-shadow:inset 0 1px 0 rgba(255,255,255,.14),0 24px 50px rgba(0,0,0,.55)}
+.plate::before{content:"";position:absolute;inset:0;border-radius:inherit;padding:1px;pointer-events:none;background:linear-gradient(140deg,rgba(143,176,255,.9),rgba(61,107,255,.1) 40%,rgba(255,143,31,.6));-webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask-composite:exclude}
+.plate::after{content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none;background:linear-gradient(105deg,transparent 40%,rgba(255,255,255,.10) 50%,transparent 60%);transform:translateX(-120%);animation:plateSweep 6s ease-in-out infinite}
+@keyframes plateSweep{35%,100%{transform:translateX(120%)}}
+.plate-top{background:transparent;color:#8fb0ff;padding:16px 22px 0;font-size:11px;letter-spacing:.1em;text-transform:uppercase}
+.hero-body{display:grid;grid-template-columns:auto minmax(0,1fr);gap:28px;align-items:center;padding:14px 22px 18px}
+.h-ring{position:relative;width:226px;height:226px;display:grid;place-items:center}
+.h-ring svg{position:absolute;inset:0;width:100%;height:100%;overflow:visible}
+.h-ticks{fill:none;stroke:rgba(143,176,255,.5);stroke-width:8;stroke-dasharray:1.5 9.5}
+.h-track{fill:none;stroke:rgba(255,255,255,.07);stroke-width:14}
+.h-arc{fill:none;stroke:url(#hg);stroke-width:14;stroke-linecap:round;stroke-dasharray:597;transform:rotate(-90deg);transform-origin:113px 113px;transition:stroke-dashoffset 1.3s cubic-bezier(.2,.8,.2,1);filter:drop-shadow(0 0 9px rgba(255,143,31,.85))}
+.h-orbit{position:absolute;inset:-6px;animation:hSpin 7s linear infinite}
+.h-orbit i{position:absolute;left:50%;top:0;width:8px;height:8px;margin-left:-4px;border-radius:50%;background:#fff;box-shadow:0 0 14px 4px var(--glow)}
+@keyframes hSpin{to{transform:rotate(360deg)}}
+.h-core{position:relative;text-align:center}
+.h-big{font:700 86px/.84 var(--f-display);font-variant-numeric:tabular-nums;background:linear-gradient(180deg,#fff 30%,#ffd9ad 70%,#ff8f1f);-webkit-background-clip:text;background-clip:text;color:transparent;filter:drop-shadow(0 0 20px rgba(255,143,31,.4))}
+.h-big.long{font-size:64px}
+.h-unit{font:600 17px var(--f-display);letter-spacing:.3em;margin:4px 0 0 .3em;color:var(--accent);text-transform:uppercase}
+.h-cfg{font:600 12px var(--f-mono);color:#8fb0ff;letter-spacing:.12em;margin-top:6px}
+.hero-body .kv{grid-template-columns:repeat(2,minmax(0,1fr));row-gap:16px}
+.hero-body .kv>div:nth-child(odd){border-left:0;padding-left:0}
+.plate-foot{border-top:1px solid rgba(255,255,255,.08);padding:12px 22px}
+.plate-warn{padding:10px 22px}
+@media (max-width:640px){
+  .hero-body{grid-template-columns:minmax(0,1fr);justify-items:center;gap:14px;padding:12px 16px 16px}
+  .hero-body .kv{width:100%;border-top:1px solid rgba(255,255,255,.08);padding-top:14px}
+  .hero-body .kv>div{text-align:center;padding:0 6px}
+  .plate-top{padding:14px 18px 0}.plate-foot,.plate-warn{padding-inline:18px}
+}
+
+/* ölçü kapsülleri: telefonda sonucun hemen altında; dokununca ilgili ölçü kutusuna gider */
+.dimcaps{display:none}
+.dimcap{padding:10px 0 9px;border-radius:999px;text-align:center;color:var(--ink);cursor:pointer;background:rgba(255,255,255,.04);border:1px solid rgba(143,176,255,.26);box-shadow:inset 0 0 18px rgba(61,107,255,.2);font:inherit}
+.dimcap b{font:700 20px/1 var(--f-display);font-variant-numeric:tabular-nums}
+.dimcap span{font:500 10px var(--f-mono);color:var(--muted);margin-left:5px;text-transform:uppercase}
+.dimcap:active{border-color:var(--glow)}
+@media (max-width:960px){
+  .page[data-page="hesap"] .results{display:contents}
+  .page[data-page="hesap"] .results>*{order:5}
+  .page[data-page="hesap"] .results>#plate{order:1}
+  .page[data-page="hesap"] .results>#dimcaps{order:2;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-top:-6px}
+  .page[data-page="hesap"] .sheet{order:3}
+  .page[data-page="hesap"] .results>#lpick{order:4}
+}
+
+/* plan kartları: dizilimin küçük resmi; seçili kartta hücreler dalga dalga yanar */
+.lp-opt{grid-template-columns:66px minmax(0,1fr);column-gap:14px;border-radius:20px;padding:14px}
+.lp-opt>*{grid-column:2}
+.lp-opt>.lp-thumb{grid-column:1;grid-row:1/span 4;align-self:center;display:block;padding:5px;border-radius:12px;background:rgba(0,0,0,.28)}
+.lp-opt.off{grid-template-columns:minmax(0,1fr)}
+.lp-opt.off>*{grid-column:1}
+.lp-thumb svg{display:block;width:100%;height:auto}
+.lp-thumb circle{fill:#4a5478}
+.lp-opt.on .lp-thumb circle{fill:#7f9dff;animation:cellWave 2.4s ease-in-out infinite}
+@keyframes cellWave{0%,60%,100%{opacity:.5}30%{opacity:1}}
+.lp-opt.on{background:linear-gradient(160deg,rgba(40,52,110,.5),rgba(10,12,22,.8))}
+.lp-name{font-size:17px}
+
+/* yüzen alt menü (telefon) */
+@media (max-width:760px){
+  .tabs{left:10px;right:10px;bottom:calc(10px + env(safe-area-inset-bottom,0px));padding-bottom:0;border-radius:26px;border:1px solid rgba(143,176,255,.26);background:rgba(12,14,26,.78);-webkit-backdrop-filter:blur(20px);backdrop-filter:blur(20px);box-shadow:0 18px 40px rgba(0,0,0,.6),0 0 30px rgba(61,107,255,.22)}
+  .tabs-in{padding:6px}
+  .tabs a,.more-btn{border-radius:20px}
+  .tabs a.on,.more-btn.on{color:#170a00;background:linear-gradient(180deg,#ffc27a,#ff8f1f);box-shadow:0 0 22px rgba(255,143,31,.55)}
+  body{padding-bottom:calc(92px + env(safe-area-inset-bottom,0px))}
+  .more-sheet:not([hidden]){bottom:calc(88px + env(safe-area-inset-bottom,0px));border-radius:22px;border-color:rgba(143,176,255,.26)}
+}
+.lite .glowbg .aur,.lite .h-orbit,.lite .lp-opt.on .lp-thumb circle{animation:none}
+.lite .plate::after{display:none}
+.lite .tabs{-webkit-backdrop-filter:none;backdrop-filter:none;background:rgba(12,14,26,.96)}
+.lite .h-arc{filter:none}
+
+</style>
+<script>/* zayıf cihazda hareketli süsler kapalı başlar */ if ((navigator.deviceMemory && navigator.deviceMemory <= 2) || (navigator.hardwareConcurrency && navigator.hardwareConcurrency <= 2)) document.documentElement.classList.add("lite");</script>
+
+<div class="glowbg" aria-hidden="true"><div class="aur a"></div><div class="aur b"></div><div class="aur c"></div><div class="floor"></div><svg viewBox="0 0 1440 900" preserveAspectRatio="none"><path class="n2" d="M-60 760 C 260 940, 470 210, 760 360 S 1250 820, 1500 150"/><path class="n1" d="M-60 760 C 260 940, 470 210, 760 360 S 1250 820, 1500 150"/><path class="n3" d="M-80 230 C 300 120, 640 520, 980 470 S 1360 260, 1520 330"/></svg></div>
 <header class="bar" lang="tr">
   <div class="wrap">
     <div class="brand">
@@ -822,6 +911,7 @@ body::before{background:#07080c}
 
 <section class="results">
   <div class="plate" id="plate"></div>
+  <div class="dimcaps" id="dimcaps" aria-label="Kutu ölçüleri"></div>
   <section class="lpick" id="lpick" aria-label="Düz (tek kat) ya da katlı"></section>
 
   <section class="block">
@@ -3045,7 +3135,7 @@ function layerPickHTML(R, rec, tek, sel, perMax){
     return `<div class="verdict good"><span><b>Önerilen plan zaten tek kat:</b> ${R.S}S${rec.P}P · ${ah(rec)} Ah en yüksek kapasiteyle tek katta${rec.grid.hex ? "" : ", kare jig'e"} dizilir.</span></div>`;
   const on = p => sel.P === p.P && (sel.Lu === 1) === (p.Lu === 1);
   const card = (p, name, tag, extra) => `<button type="button" class="lp-opt${on(p) ? " on" : ""}" data-p="${p.P}" aria-pressed="${on(p)}">
-      <span class="lp-top"><span class="lp-name">${name}</span>${tag}</span>
+      ${planThumb(R, p)}<span class="lp-top"><span class="lp-name">${name}</span>${tag}</span>
       <span class="lp-val">${R.S}S${p.P}P · ${ah(p)} Ah</span>
       <span class="lp-sub">${p.Lu === 1 ? "tek kat" : p.Lu + " kat"} · ${p.shape} · ~${fmtTime(p.total)}</span>${extra}</button>`;
   const jig = !rec.grid.hex;   // önerilen plan kare ızgaralı mı (kare ızgara yoksa petek önerilmiş olabilir)
@@ -3092,8 +3182,28 @@ function showNoResult(msg){
 function scheduleRender(){ clearTimeout(renderT); renderT = setTimeout(() => { renderT = 0; render(); }, 450); }
 function renderNow(){ if (!renderT) return; clearTimeout(renderT); renderT = 0; render(); }
 
+// telefonda sonucun altındaki ölçü kapsülleri: dokununca ilgili ölçü kutusu açılır
+function dimCaps(){
+  const el = $("dimcaps"); if (!el) return;
+  const u = $("unit").selectedOptions[0] ? $("unit").selectedOptions[0].textContent : "";
+  el.innerHTML = [["L", "U", "Uzunluk"], ["W", "G", "Genişlik"], ["H", "Y", "Yükseklik"]].map(([k, l, n]) =>
+    `<button type="button" class="dimcap" data-f="${k}" aria-label="${n}: ${fmt(num(k))} ${u}, değiştir"><b>${fmt(num(k))}</b><span>${u} ${l}</span></button>`).join("");
+  el.querySelectorAll("button").forEach(b => b.onclick = () => {
+    const f = $(b.dataset.f); if (!f) return;
+    f.scrollIntoView({block: "center", behavior: "smooth"});
+    setTimeout(() => { f.focus({preventScroll: true}); f.select(); }, 350);
+  });
+}
+// plan kartındaki küçük resim: ilk katın gerçek hücre yerleşimi
+function planThumb(R, p){
+  const g = p.grid, cells = p.layers[0].flatMap(x => x.cells), r = (R.d / 2 * 0.86).toFixed(1);
+  return `<span class="lp-thumb" aria-hidden="true"><svg viewBox="0 0 ${g.a.toFixed(0)} ${g.b.toFixed(0)}">` +
+    cells.map(c => `<circle cx="${c.x.toFixed(1)}" cy="${c.y.toFixed(1)}" r="${r}"${cells.length <= 160 ? ` style="animation-delay:${(c.x / g.a * 0.9).toFixed(2)}s"` : ""}/>`).join("") + `</svg></span>`;
+}
+let lastFill = 0;
 function render(){
   const R = readInputs();
+  dimCaps();
   const vNom = R.S * R.cv;
   const C = chem();
   const common = $("chem").value === "lfp"
@@ -3198,15 +3308,24 @@ function render(){
   const P = pWant;
   const presetName = $("preset").value === "custom" ? `Özel hücre ${fmt(R.d)}×${fmt(R.len)} mm` : $("preset").selectedOptions[0].textContent;
   $("barchip").textContent = `${R.S}S${P}P · ${fmt(P*R.ah)} Ah`;
+  const fill = maxCells ? Math.min(1, R.S * P / maxCells) : 0, fillPct = Math.round(fill * 100);   // halka: kutuya en çok sığan hücrenin ne kadarı kullanılıyor
   $("plate").innerHTML = `
     <div class="plate-top"><span>${C.name} batarya paketi</span><span>${presetName} · ${fmt(R.ah)} Ah hücre</span></div>
-    <div class="plate-body">
-      <div class="cfg" aria-label="${R.S} seri ${P} paralel"><span>${R.S}S</span><span class="p">${P}P</span></div>
+    <div class="hero-body">
+      <div class="h-ring" role="img" aria-label="${R.S} seri ${P} paralel, ${fmt(P*R.ah)} amper saat; kutuya en çok sığanın yüzde ${fillPct}'i">
+        <svg viewBox="0 0 226 226" aria-hidden="true">
+          <defs><linearGradient id="hg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#3d6bff"/><stop offset=".55" stop-color="#ff8f1f"/><stop offset="1" stop-color="#ffd9ad"/></linearGradient></defs>
+          <circle class="h-ticks" cx="113" cy="113" r="108"/><circle class="h-track" cx="113" cy="113" r="95"/>
+          <circle class="h-arc" id="h-arc" cx="113" cy="113" r="95" style="stroke-dashoffset:${(597 * (1 - lastFill)).toFixed(1)}"/>
+        </svg>
+        <div class="h-orbit"><i></i></div>
+        <div class="h-core"><div class="h-big${fmt(P*R.ah).length > 3 ? " long" : ""}"><span class="num" data-v="${P*R.ah}" data-k="1">${fmt(P*R.ah)}</span></div><div class="h-unit">Ah</div><div class="h-cfg">${R.S}S ${P}P · %${fillPct}</div></div>
+      </div>
       <dl class="kv">
         <div><dt>Nominal</dt><dd><span class="num" data-v="${vNom}" data-k="1">${fmt(vNom,1)}</span><small> V</small></dd></div>
-        <div><dt>Kapasite</dt><dd><span class="num" data-v="${P*R.ah}" data-k="1">${fmt(P*R.ah)}</span><small> Ah</small></dd></div>
         <div><dt>Enerji</dt><dd><span class="num" data-v="${R.S*R.cv*P*R.ah/1000}" data-k="2">${fmt(R.S*R.cv*P*R.ah/1000,2)}</span><small> kWh</small></dd></div>
         <div><dt>Şarj / boş</dt><dd><span class="num" data-v="${R.S*cdv.vmax}" data-k="1">${fmt(R.S*cdv.vmax,1)}</span><small> / ${fmt(R.S*cdv.vmin,1)} V</small></dd></div>
+        <div><dt>Kutu doluluğu</dt><dd><span class="num" data-v="${fillPct}" data-k="0">${fillPct}</span><small> % · en çok ${maxCells} hücre</small></dd></div>
       </dl>
     </div>
     <div class="plate-foot">
@@ -3216,6 +3335,7 @@ function render(){
       <span>Tahmini işçilik <b>${fmtTime(sel.total)}</b></span>
     </div>${tightNote(R, sel)}`;
   countUp($("plate"));
+  { const arc = $("h-arc"); lastFill = fill; if (arc) requestAnimationFrame(() => requestAnimationFrame(() => { arc.style.strokeDashoffset = (597 * (1 - fill)).toFixed(1); })); }
 
   document.querySelectorAll(".pb-text").forEach(e => e.innerHTML = `Seçili plan: <b>${sel.shape}</b> · ${sel.grid.o.name} · ${R.S}S${pWant}P · ${fmt(pWant*R.ah)} Ah · tahmini ${fmtTime(sel.total)}`);
   calcCtx = {R, P: pWant, pl: sel};

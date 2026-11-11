@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="tr">
 <head>
-<meta name="app-ver" content="1678dcf8bf">
+<meta name="app-ver" content="5b32d00f83">
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#07080c">
@@ -4267,10 +4267,14 @@ const MAN = (() => {
     if (st.L + 1 >= grid.layers){ flash("Bu kutuda bir sonraki kat yok.", true); return; }
     if (Object.keys(d[st.L + 1] || {}).length){ flash(`Kat ${st.L + 2} dolu. Önce o katı temizleyin.`, true); return; }
     let maxG = 0; Object.values(d).forEach(l => Object.values(l || {}).forEach(n => { if (n > maxG) maxG = n; }));
-    const minG = Math.min(...Object.values(lay));
-    const out = {}; keys.forEach(k => { out[k] = lay[k] - minG + maxG + 1; });
+    // Kat atlaması: üst katın ilk grubu, alt katın son grubunun tam üstüne gelir (ör. S10'un üstünde S11).
+    // Bu yüzden numaralar ters sırayla verilir: alt katın son grubunun yuvası yeni katın ilk grubu olur.
+    const order = [...new Set(Object.values(lay))].sort((a, b) => a - b), m = order.length;
+    const renum = new Map(order.map((n, r) => [n, maxG + m - r]));
+    const out = {}; keys.forEach(k => { out[k] = renum.get(lay[k]); });
+    const lastG = order[m - 1];
     snap(); d[st.L + 1] = out; st.L = st.L + 1; st.curG = nextFree(1); persist(); changed();
-    flash(`Kat ${st.L} → Kat ${st.L + 1} kopyalandı; grup numaraları S${maxG + 1}'den devam ediyor. Kutup yönleri kurala göre kendiliğinden ayarlanır.`);
+    flash(`Kat ${st.L} → Kat ${st.L + 1} kopyalandı. Atlama: S${lastG} → S${maxG + 1}, ikisi üst üste. Numaralar ters yönde ilerler, son grup S${maxG + m}. Kutup yönleri kurala göre kendiliğinden ayarlanır.`);
   }
 
   // ---- Taşı aracı: bir grubu tutup sürükleyerek yerini değiştir ----

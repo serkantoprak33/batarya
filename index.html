@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="tr">
 <head>
-<meta name="app-ver" content="5b32d00f83">
+<meta name="app-ver" content="de62da4ebb">
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#07080c">
@@ -3179,28 +3179,35 @@ function pHint(R, m){
 }
 
 // Önce önerilen plan (paket etiketi) gösterilir; ardından düz (tek kat) / katlı seçimi sunulur.
-// rec: önerilen plan, tek: tek kata sığan en yüksek Ah'lı jig'e uygun plan (yoksa null), sel: seçili plan
-function layerPickHTML(R, rec, tek, sel, perMax){
+// top: en yüksek kapasiteli plan, tek: tek kata sığan en yüksek Ah'lı jig'e uygun plan (yoksa null), sel: seçili plan,
+// preferTek: tek kat önerildi mi (işçiliği kısa, kapasite kaybı küçük)
+function layerPickHTML(R, top, tek, sel, perMax, preferTek){
   const ah = p => fmt(p.P * R.ah);
-  if (rec.Lu === 1)
-    return `<div class="verdict good"><span><b>Önerilen plan zaten tek kat:</b> ${R.S}S${rec.P}P · ${ah(rec)} Ah en yüksek kapasiteyle tek katta${rec.grid.hex ? "" : ", kare jig'e"} dizilir.</span></div>`;
+  if (top.Lu === 1)
+    return `<div class="verdict good"><span><b>Önerilen plan zaten tek kat:</b> ${R.S}S${top.P}P · ${ah(top)} Ah en yüksek kapasiteyle tek katta${top.grid.hex ? "" : ", kare jig'e"} dizilir.</span></div>`;
   const on = p => sel.P === p.P && (sel.Lu === 1) === (p.Lu === 1);
   const card = (p, name, tag, extra) => `<button type="button" class="lp-opt${on(p) ? " on" : ""}" data-p="${p.P}" aria-pressed="${on(p)}">
       ${planThumb(R, p)}<span class="lp-top"><span class="lp-name">${name}</span>${tag}</span>
       <span class="lp-val">${R.S}S${p.P}P · ${ah(p)} Ah</span>
       <span class="lp-sub">${p.Lu === 1 ? "tek kat" : p.Lu + " kat"} · ${p.shape} · ~${fmtTime(p.total)}</span>${extra}</button>`;
-  const jig = !rec.grid.hex;   // önerilen plan kare ızgaralı mı (kare ızgara yoksa petek önerilmiş olabilir)
-  let h = `<div class="lp-head"><h2>Düz mü, katlı mı?</h2><span>${jig ? "İkisi de kare jig'e dizilir. " : ""}Önerilen plan yukarıda; tek kat isterseniz diğerine dokunun.</span></div><div class="lp-opts">`;
-  h += card(rec, "Katlı", `<span class="pill hot">önerilen</span>`, jig ? `<span class="lp-diff">Her kat jig'de ayrı dizilir, sonra katlar birleştirilir.</span>` : "");
-  if (tek){
-    const dT = rec.total - tek.total;
-    h += card(tek, "Düz (tek kat)", "", `<span class="lp-diff">${fmt((rec.P - tek.P) * R.ah)} Ah daha az · işçilik ~${fmtTime(Math.abs(dT))} daha ${dT >= 0 ? "kısa" : "uzun"}</span>`);
-  } else {
-    h += `<div class="lp-opt off" aria-disabled="true"><span class="lp-top"><span class="lp-name">Düz (tek kat)</span></span><span class="lp-val">Sığmıyor</span>
+  const jig = !top.grid.hex;   // katlı plan kare ızgaralı mı (kare ızgara yoksa petek önerilmiş olabilir)
+  const rec = `<span class="pill hot">önerilen</span>`;
+  const head = preferTek
+    ? `Tek kat daha kolay ve kapasite farkı küçük olduğu için önerildi; daha yüksek Ah isterseniz katlıya dokunun.`
+    : `${jig ? "İkisi de kare jig'e dizilir. " : ""}Önerilen plan yukarıda; tek kat isterseniz diğerine dokunun.`;
+  let h = `<div class="lp-head"><h2>Düz mü, katlı mı?</h2><span>${head}</span></div><div class="lp-opts">`;
+  const dAh = tek ? fmt((top.P - tek.P) * R.ah) : "", dT = tek ? top.total - tek.total : 0;
+  const katli = card(top, "Katlı", preferTek ? "" : rec, preferTek
+    ? `<span class="lp-diff">${dAh} Ah daha fazla · işçilik ~${fmtTime(Math.abs(dT))} daha uzun</span>`
+    : (jig ? `<span class="lp-diff">Her kat jig'de ayrı dizilir, sonra katlar birleştirilir.</span>` : ""));
+  let duz;
+  if (tek) duz = card(tek, "Düz (tek kat)", preferTek ? rec : "", `<span class="lp-diff">${dAh} Ah daha az · işçilik ~${fmtTime(Math.abs(dT))} daha ${dT >= 0 ? "kısa" : "uzun"}</span>`);
+  else duz = `<div class="lp-opt off" aria-disabled="true"><span class="lp-top"><span class="lp-name">Düz (tek kat)</span></span><span class="lp-val">Sığmıyor</span>
       <span class="lp-sub">${R.S} seri için bir katta en az ${R.S} hücre gerekir; bu kutuda bir katta en çok ${perMax} hücre var.</span></div>`;
-  }
-  return h + `</div>`;
+  return h + (preferTek ? duz + katli : katli + duz) + `</div>`;
 }
+
+const TEK_KAT_KAYIP = 0.20;   // tek kat, en yüksek kapasiteden en çok bu oranda düşükse önerilir
 
 /* ---------- Ana çizim ---------- */
 // Boş, sıfır ya da yanlış birimle girilmiş değerler telefonu kilitleyecek kadar büyük hesaba yol açmasın
@@ -3293,9 +3300,15 @@ function render(){
   }
   const maxClean = pInfo.find(x => x.clean)?.P, maxAny = pInfo[0].P;
   const maxSquare = pInfo.find(x => x.square)?.P, maxSingle = pInfo.find(x => x.single)?.P;
-  // "Yeni plan" önce önerilir: kare ızgarayla (jig'e uygun) en yüksek P; petek kare jig'e uymaz.
-  // Tek kat seçeneği bunun ardından, paket etiketinin altında sunulur (layerPickHTML).
-  const recP = maxSquare || maxClean || maxAny;
+  // En yüksek kapasite: kare ızgarayla (jig'e uygun) en yüksek P; petek kare jig'e uymaz.
+  const topP = maxSquare || maxClean || maxAny;
+  const topPlan = plansFor(R, grids, topP)[0];
+  const tekPlan = maxSingle ? plansFor(R, grids, maxSingle).find(p => p.Lu === 1 && jigTier(p) === 0) || null : null;
+  // Tek kat önceliği (atölye kuralı): işçiliği daha kısa olan tek kat, kapasite kaybı küçükse (en çok TEK_KAT_KAYIP) katlı
+  // plana tercih edilir (ör. 27,5 Ah katlı yerine 22,5 Ah tek kat). Kayıp büyükse yine en yüksek kapasite önerilir;
+  // öbür seçenek her iki durumda da etiketin altındaki kartlarda durur.
+  const preferTek = !!tekPlan && topPlan.Lu > 1 && maxSingle < topP && (topP - maxSingle) / topP <= TEK_KAT_KAYIP + 1e-9 && tekPlan.total < topPlan.total;
+  const recP = preferTek ? maxSingle : topP;
   const prev = parseInt($("psel").value);
   $("psel").innerHTML = pInfo.map(x => {
     const tags = [];
@@ -3321,10 +3334,8 @@ function render(){
   const fastest = plans.reduce((a, p) => p.total < a.total ? p : a, plans[0]);
 
   // önce önerilen plan (yukarıdaki etiket), ardından düz (tek kat) / katlı seçimi
-  const recPlan = plansFor(R, grids, recP)[0];
-  const tekPlan = maxSingle ? plansFor(R, grids, maxSingle).find(p => p.Lu === 1 && jigTier(p) === 0) || null : null;
   const perMax = Math.max(0, ...grids.filter(g => !g.hex && g.layers).map(g => g.per));
-  $("lpick").innerHTML = layerPickHTML(R, recPlan, tekPlan, sel, perMax);
+  $("lpick").innerHTML = layerPickHTML(R, topPlan, tekPlan, sel, perMax, preferTek);
   $("lpick").querySelectorAll("button[data-p]").forEach(b => b.onclick = () => { $("psel").value = b.dataset.p; selectedPlanId = null; render(); });
 
   const shown = plans.slice(0, 14);

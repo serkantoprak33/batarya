@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="tr">
 <head>
-<meta name="app-ver" content="b412a47295">
+<meta name="app-ver" content="1678dcf8bf">
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#07080c">
@@ -1347,6 +1347,7 @@ const V3 = (() => {
       if (controls.update()) needs = true;
       if (!needs) return;
       if (isMobile && anim && now - lastRender < 32) return;
+      fadeLabels();
       if (fx) fx.comp.render(); else renderer.render(scene, camera);
       needs = false; lastRender = now;
     };
@@ -1469,20 +1470,43 @@ const V3 = (() => {
     });
   }
 
-  function label(text, U, bg, fg, scale = 1){
-    const fs = 44, pad = fs * 0.45, cv = document.createElement("canvas"), ctx = cv.getContext("2d");
+  // Etiketler: koyu cam zemin, ince renkli kenar (renk etiketin türünü söyler), açık yazı. Paketin üstünü renkli kutularla örtmez.
+  // solid = true: ölçü sonucu gibi öne çıkması gereken dolu etiket.
+  function label(text, U, bg, fg, scale = 1, solid = false){
+    const fs = 44, pad = fs * 0.5, cv = document.createElement("canvas"), ctx = cv.getContext("2d");
     const font = `600 ${fs}px "IBM Plex Mono", ui-monospace, monospace`;
     ctx.font = font; const w = Math.ceil(ctx.measureText(text).width + pad * 2), h = Math.ceil(fs * 1.45);
     cv.width = w; cv.height = h; ctx.font = font;
-    const r = h * 0.28;
-    ctx.fillStyle = bg; ctx.beginPath();
-    ctx.moveTo(r, 0); ctx.lineTo(w - r, 0); ctx.quadraticCurveTo(w, 0, w, r); ctx.lineTo(w, h - r); ctx.quadraticCurveTo(w, h, w - r, h);
-    ctx.lineTo(r, h); ctx.quadraticCurveTo(0, h, 0, h - r); ctx.lineTo(0, r); ctx.quadraticCurveTo(0, 0, r, 0); ctx.fill();
-    ctx.fillStyle = fg; ctx.textAlign = "center"; ctx.textBaseline = "middle"; ctx.fillText(text, w / 2, h / 2 + 2);
+    const rr = i => {
+      const r = (h - 2 * i) * (solid ? 0.28 : 0.42), x0 = i, y0 = i, x1 = w - i, y1 = h - i;
+      ctx.beginPath(); ctx.moveTo(x0 + r, y0); ctx.lineTo(x1 - r, y0); ctx.quadraticCurveTo(x1, y0, x1, y0 + r); ctx.lineTo(x1, y1 - r); ctx.quadraticCurveTo(x1, y1, x1 - r, y1);
+      ctx.lineTo(x0 + r, y1); ctx.quadraticCurveTo(x0, y1, x0, y1 - r); ctx.lineTo(x0, y0 + r); ctx.quadraticCurveTo(x0, y0, x0 + r, y0); ctx.closePath();
+    };
+    if (solid){ ctx.fillStyle = bg; rr(0); ctx.fill(); ctx.fillStyle = fg; }
+    else {
+      const neutral = /^#1c2731$/i.test(bg) || /^rgba\(28,39,49/.test(bg);
+      ctx.fillStyle = "rgba(8,11,22,.84)"; rr(0); ctx.fill();
+      ctx.lineWidth = 3.5; ctx.strokeStyle = neutral ? "rgba(143,176,255,.8)" : bg; rr(2.5); ctx.stroke();
+      ctx.fillStyle = "#f1f4fb";
+    }
+    ctx.textAlign = "center"; ctx.textBaseline = "middle"; ctx.fillText(text, w / 2, h / 2 + 2);
     const tex = new THREE.CanvasTexture(cv); tex.encoding = THREE.sRGBEncoding; tex.minFilter = THREE.LinearFilter;
     const s = new THREE.Sprite(new THREE.SpriteMaterial({map: tex, depthTest: false, transparent: true}));
     const sh = U * 0.85 * scale; s.scale.set(sh * w / h, sh, 1); s.renderOrder = 10;
+    s.userData.fade = !solid;
     return s;
+  }
+  // uzaktaki etiketler solar: öndekiler okunur, arkadakiler paketi örtmez (off = görsel kaydederken hepsi tam görünür)
+  const fadeV = new THREE.Vector3();
+  function fadeLabels(off){
+    if (!pack || !camera) return;
+    let list = pack.userData.labels;
+    if (!list){ list = pack.userData.labels = []; pack.traverse(o => { if (o.isSprite && o.userData.fade) list.push(o); }); }
+    if (!list.length) return;
+    let dmin = Infinity, dmax = 0;
+    list.forEach(o => { const d = o.userData.d = o.getWorldPosition(fadeV).distanceTo(camera.position); if (o.visible){ if (d < dmin) dmin = d; if (d > dmax) dmax = d; } });
+    const span = dmax - dmin;
+    list.forEach(o => { o.material.opacity = off || !(span > 1) ? 1 : 1 - 0.68 * Math.pow(Math.min(1, Math.max(0, (o.userData.d - dmin) / span)), 1.3); });
   }
 
   // gerçekçi hücre kılıfı: kimyaya göre renk, üzerinde model / voltaj / kapasite yazısı
@@ -1724,7 +1748,7 @@ const V3 = (() => {
     let rings = null, ins = null, holders = null;
     if (useTex){
       rings = new THREE.InstancedMesh(new THREE.CylinderGeometry(r * 1.015, r * 1.015, ringH, SEG, 1, true), mat({roughness: 0.4, side: THREE.DoubleSide}), Math.max(1, N));
-      ins = new THREE.InstancedMesh(new THREE.CylinderGeometry(r * 0.8, r * 0.8, 0.5, SEG), mat({color: 0xefeadb, roughness: 0.85}), Math.max(1, N));
+      ins = new THREE.InstancedMesh(new THREE.CylinderGeometry(r * 0.97, r * 0.97, 0.5, SEG), mat({color: 0x1f7a4d, roughness: 0.92, envMapIntensity: 0.5}), Math.max(1, N));   // + uçta yeşil yalıtım pulu: kutup bir bakışta görünür
       rings.count = N; ins.count = N;
     }
     if (st.holder){
@@ -1875,6 +1899,34 @@ const V3 = (() => {
       };
       for (let L = 1; L < pl.Lu; L++) if (inL(L) || inL(L - 1)) sheet((faceC(L - 1, "top", 0) + faceC(L, "bot", 0)) / 2, sid["jump" + (L - 1)]);
       if (st.walls && inL(0)) sheet(faceC(0, "bot", T + 1.2), sid.box);
+    }
+
+    // kapton bant kuşakları: her katın hücre bloğunu saran amber bant. Yalnız blok tam dikdörtgense (boşluklu katta bant
+    // havada kalırdı); tutuculu dizilimde, ısı haritasında ve bitmiş pakette çizilmez.
+    if (st.real && !heat && !st.holder && !st.wrap && !g.hex){
+      const tapeW = Math.min(12, R.len * 0.14), tt = 0.35;
+      const tapeMat = mat({color: 0xb8650a, roughness: 0.3, metalness: 0.0, envMapIntensity: 0.45, transparent: true, opacity: 0.55, side: THREE.DoubleSide, depthWrite: false});
+      const o0 = pos(0, 0, 0), tb = new THREE.Matrix4().makeBasis(pos(1, 0, 0).sub(o0), pos(0, 1, 0).sub(o0), axis);
+      const rr = (w, h, rad, path) => {
+        path.moveTo(-w + rad, -h); path.lineTo(w - rad, -h); path.absarc(w - rad, -h + rad, rad, -Math.PI / 2, 0, false);
+        path.lineTo(w, h - rad); path.absarc(w - rad, h - rad, rad, 0, Math.PI / 2, false);
+        path.lineTo(-w + rad, h); path.absarc(-w + rad, h - rad, rad, Math.PI / 2, Math.PI, false);
+        path.lineTo(-w, -h + rad); path.absarc(-w + rad, -h + rad, rad, Math.PI, Math.PI * 1.5, false);
+        return path;
+      };
+      pl.layers.forEach((lay, L) => {
+        if (!inL(L)) return;
+        const cs = lay.flatMap(x => x.cells), xs = cs.map(c => c.x), ys = cs.map(c => c.y);
+        const x0 = Math.min(...xs), x1 = Math.max(...xs), y0 = Math.min(...ys), y1 = Math.max(...ys);
+        const nx = Math.round((x1 - x0) / R.p) + 1, ny = Math.round((y1 - y0) / R.p) + 1;
+        if (cs.length < 2 || cs.length !== nx * ny) return;
+        const hw = (x1 - x0) / 2 + r, hh = (y1 - y0) / 2 + r;
+        const shape = rr(hw + tt, hh + tt, r + tt, new THREE.Shape());
+        shape.holes.push(rr(hw, hh, r, new THREE.Path()));
+        const geo = new THREE.ExtrudeGeometry(shape, {depth: tapeW, bevelEnabled: false, curveSegments: 10});
+        geo.applyMatrix4(tb);
+        [0.22, 0.78].forEach(f => { const m = new THREE.Mesh(geo, tapeMat); m.position.copy(pos((x0 + x1) / 2, (y0 + y1) / 2, c0(L) + R.len * f - tapeW / 2)); m.renderOrder = 2; addMesh(m, sid["bot" + L]); });
+      });
     }
 
     // ---- BMS: B− ucuna en yakın boşluğa yerleştir ----
@@ -2376,7 +2428,7 @@ const V3 = (() => {
     const U = measU(), d = a.distanceTo(b);
     const cyl = new THREE.Mesh(new THREE.CylinderGeometry(U * 0.03, U * 0.03, d, 10), new THREE.MeshBasicMaterial({color: 0xff8f1f, depthTest: false, transparent: true}));
     cyl.position.copy(a).add(b).multiplyScalar(0.5); cyl.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), b.clone().sub(a).normalize()); cyl.renderOrder = 29; measGroup().add(cyl);
-    const lb = label(`${fmt(d, 1)} mm`, U, "rgba(255,143,31,.96)", "#170a00", 1.05);
+    const lb = label(`${fmt(d, 1)} mm`, U, "rgba(255,143,31,.96)", "#170a00", 1.05, true);
     lb.position.copy(cyl.position).add(new THREE.Vector3(0, U * 0.6, 0)); lb.renderOrder = 31; measGroup().add(lb);
   }
   // dokunulan yüzey noktası: önce dolu parçalar (hücre, nikel, BMS…), yoksa saydam duvar / kutu
@@ -2459,7 +2511,7 @@ const V3 = (() => {
         else if (o.isLine){ const old = o.material; o.material = edge; if (old && old !== edge) old.dispose(); }
       });
     }
-    const tag = (t, bg, x) => { const lb = label(t, U, bg, "#ffffff", 1.5); lb.position.set(x, B.H / 2 + U * 1.1, 0); return lb; };
+    const tag = (t, bg, x) => { const lb = label(t, U, bg, "#ffffff", 1.5, true); lb.position.set(x, B.H / 2 + U * 1.1, 0); return lb; };
     cmpPack.add(tag("A", "#2f5be6", side ? 0 : -B.L / 2));
     pack.add(tag("B", "#e8740c", side ? 0 : B.L / 2));
     // gölge alanı iki paketi de kapsasın
@@ -2590,6 +2642,7 @@ const V3 = (() => {
       const {R, pl} = cur, W = isMobile ? 1800 : 2400, H = Math.round(W * 0.62), band = Math.round(W * 0.07);
       const pr = renderer.getPixelRatio(), sz = renderer.getSize(new THREE.Vector2()), asp = camera.aspect;
       renderer.setPixelRatio(1); renderer.setSize(W, H, false); camera.aspect = W / H; camera.updateProjectionMatrix();
+      fadeLabels(true);
       renderer.render(scene, camera);
       const cv = document.createElement("canvas"); cv.width = W; cv.height = H + band;
       const g = cv.getContext("2d");
@@ -2656,6 +2709,7 @@ const V3 = (() => {
         camera.near = dist / 100; camera.far = dist * 10; camera.updateProjectionMatrix();
         controls.target.copy(sph.center); camera.position.copy(sph.center.clone().add(dirFor("iso").multiplyScalar(dist))); controls.update();
       }
+      fadeLabels(true);
       renderer.render(scene, camera);
       url = renderer.domElement.toDataURL("image/png");
       renderer.setPixelRatio(pr); renderer.setSize(sz.x, sz.y, false); camera.aspect = asp; camera.updateProjectionMatrix();

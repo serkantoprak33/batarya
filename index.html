@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="tr">
 <head>
-<meta name="app-ver" content="81d5989e1b">
+<meta name="app-ver" content="48918565e1">
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#07080c">
@@ -919,7 +919,7 @@ body::before{background:#07080c}
       <tbody id="plans"></tbody>
     </table>
     </div>
-    <div class="hint" id="planhint" style="margin-top:10px">Sıra: önce jig'e uygun planlar (kare ızgara, düz gruplar), sonra tek kat, sonra yatık – enine dizilim, sonra az katlı olanlar, yan yana düz sıralar ve kısa süre. Bir satıra dokunun; şeması ve montaj adımları aşağıda açılır.</div>
+    <div class="hint" id="planhint" style="margin-top:10px">Sıra: önce jig'e uygun planlar (kare ızgara, düz gruplar), sonra yatık – enine dizilim, sonra az katlı olanlar (tek kat en önde), yan yana düz sıralar ve kısa süre. Bir satıra dokunun; şeması ve montaj adımları aşağıda açılır.</div>
   </section>
   <div class="golinks">
     <a href="#sema">Montaj şeması <span aria-hidden="true">→</span></a>
@@ -2799,6 +2799,7 @@ const ORIENT = [
   {key:"W", name:"Yatık – enine",  a:"L", b:"H", c:"W"},
 ];
 const MINUS = "−";
+let wantTek = false;   // “Düz (tek kat)” kartına dokunuldu: o P'de tek katlı plan seçilsin
 let selectedPlanId = null, lastS = null, lastDetail = null, detailDirty = true, renderT = 0;
 const pageShown = p => { const el = document.querySelector(`.page[data-page="${p}"]`); return !!el && !el.hidden; };
 
@@ -3142,7 +3143,7 @@ const jigTier = p => p.grid.hex ? 2 : p.custom ? 1 : 0;
 const lineRank = p => p.snake ? 3 : p.line ? (p.end2end ? 2 : 0) : 1;
 // Atölye kuralı: en kolay dizilim "Yatık – enine" (hücre ekseni kutunun genişliği boyunca); önce o hesaba alınır.
 const enineRank = p => p.grid.o.key === "W" ? 0 : 1;
-// Sıra ("yeni plan" en üstte): jig'e uygun → tek kat → yatık enine → az kat → yan yana düz sıra → süre
+// Sıra ("yeni plan" en üstte): jig'e uygun → yatık enine → az kat (tek kat en önde) → yan yana düz sıra → süre
 function genPlans(R, grids, P){
   const plans = [];
   for (const g of grids){
@@ -3155,7 +3156,7 @@ function genPlans(R, grids, P){
   const out = plans.filter(p => {
     // yılan dizilimi tesadüfen düz çıktıysa, aynı ızgaradaki düz planın kopyasıdır
     if (p.snake && plans.some(q => q !== p && !q.snake && q.grid.id === p.grid.id && Math.abs(q.total - p.total) < 0.01)) return false; const k = p.grid.o.key + "|" + p.grid.hex + "|" + p.shape + "|" + p.Lu + "|" + Math.round(p.total*10); if (seen.has(k)) return false; seen.add(k); return true; });
-  out.sort((a, b) => jigTier(a) - jigTier(b) || (a.Lu > 1) - (b.Lu > 1) || enineRank(a) - enineRank(b) || a.Lu - b.Lu || lineRank(a) - lineRank(b) || a.total - b.total);
+  out.sort((a, b) => jigTier(a) - jigTier(b) || enineRank(a) - enineRank(b) || a.Lu - b.Lu || lineRank(a) - lineRank(b) || a.total - b.total);
   return out;
 }
 
@@ -3188,7 +3189,7 @@ function layerPickHTML(R, top, tek, sel, perMax, preferTek){
   if (top.Lu === 1)
     return `<div class="verdict good"><span><b>Önerilen plan zaten tek kat:</b> ${R.S}S${top.P}P · ${ah(top)} Ah en yüksek kapasiteyle tek katta${top.grid.hex ? "" : ", kare jig'e"} dizilir.</span></div>`;
   const on = p => sel.P === p.P && (sel.Lu === 1) === (p.Lu === 1);
-  const card = (p, name, tag, extra) => `<button type="button" class="lp-opt${on(p) ? " on" : ""}" data-p="${p.P}" aria-pressed="${on(p)}">
+  const card = (p, name, tag, extra) => `<button type="button" class="lp-opt${on(p) ? " on" : ""}" data-p="${p.P}" data-tek="${p.Lu === 1 ? 1 : 0}" aria-pressed="${on(p)}">
       ${planThumb(R, p)}<span class="lp-top"><span class="lp-name">${name}</span>${tag}</span>
       <span class="lp-val">${R.S}S${p.P}P · ${ah(p)} Ah</span>
       <span class="lp-sub">${p.Lu === 1 ? "tek kat" : p.Lu + " kat"} · ${p.shape} · ~${fmtTime(p.total)}</span>${extra}</button>`;
@@ -3309,7 +3310,8 @@ function render(){
   // Tek kat önceliği (atölye kuralı): işçiliği daha kısa olan tek kat, kapasite kaybı küçükse (en çok TEK_KAT_KAYIP) katlı
   // plana tercih edilir (ör. 27,5 Ah katlı yerine 22,5 Ah tek kat). Kayıp büyükse yine en yüksek kapasite önerilir;
   // öbür seçenek her iki durumda da etiketin altındaki kartlarda durur.
-  const preferTek = !!tekPlan && topPlan.Lu > 1 && maxSingle < topP && (topP - maxSingle) / topP <= TEK_KAT_KAYIP + 1e-9 && tekPlan.total < topPlan.total;
+  const preferTek = !!tekPlan && topPlan.Lu > 1 && maxSingle < topP && (topP - maxSingle) / topP <= TEK_KAT_KAYIP + 1e-9 && tekPlan.total < topPlan.total
+    && !(enineRank(topPlan) === 0 && enineRank(tekPlan) !== 0);   // yatık enine, tek kattan önce gelir
   const recP = preferTek ? maxSingle : topP;
   const prev = parseInt($("psel").value);
   $("psel").innerHTML = pInfo.map(x => {
@@ -3322,7 +3324,8 @@ function render(){
   }).join("");
   // kutu, hücre ya da seri sayısı değişince yine önce önerilen plana dön; aynı ölçülerde kullanıcının seçtiği P (ör. tek kat) korunur
   const geoKey = [R.box.L, R.box.W, R.box.H, R.m, R.off.L, R.off.W, R.off.H, R.d, R.len, R.gap, R.lgap, R.S].join("|");
-  const sChanged = lastS !== geoKey; lastS = geoKey;
+  const hadGeo = lastS !== null, sChanged = lastS !== geoKey; lastS = geoKey;
+  if (sChanged && hadGeo && !restoreP) selectedPlanId = null;   // kutu / hücre / seri değişti: önce yine önerilen plan gelsin
   const pWant = (!sChanged && pInfo.some(x => x.P === prev)) ? prev
     : (restoreP && pInfo.some(x => x.P === restoreP)) ? restoreP : recP;
   restoreP = null;
@@ -3330,7 +3333,8 @@ function render(){
   $("phint").innerHTML = pHint(R, {maxAny, maxClean, maxSquare, maxSingle});
 
   const plans = plansFor(R, grids, pWant);
-  if (!plans.find(p => p.id === selectedPlanId)) selectedPlanId = plans[0].id;
+  if (!plans.find(p => p.id === selectedPlanId)) selectedPlanId = (tekPlan && pWant === maxSingle && (preferTek || wantTek) && plans.includes(tekPlan) ? tekPlan : plans[0]).id;
+  wantTek = false;
   const sel = plans.find(p => p.id === selectedPlanId);
   const best = plans[0];
   const fastest = plans.reduce((a, p) => p.total < a.total ? p : a, plans[0]);
@@ -3338,7 +3342,7 @@ function render(){
   // önce önerilen plan (yukarıdaki etiket), ardından düz (tek kat) / katlı seçimi
   const perMax = Math.max(0, ...grids.filter(g => !g.hex && g.layers).map(g => g.per));
   $("lpick").innerHTML = layerPickHTML(R, topPlan, tekPlan, sel, perMax, preferTek);
-  $("lpick").querySelectorAll("button[data-p]").forEach(b => b.onclick = () => { $("psel").value = b.dataset.p; selectedPlanId = null; render(); });
+  $("lpick").querySelectorAll("button[data-p]").forEach(b => b.onclick = () => { $("psel").value = b.dataset.p; selectedPlanId = null; wantTek = b.dataset.tek === "1"; render(); });
 
   const shown = plans.slice(0, 14);
   $("plantitle").textContent = `${R.S}S${pWant}P için ${plans.length} seçenek`;

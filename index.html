@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="tr">
 <head>
-<meta name="app-ver" content="de62da4ebb">
+<meta name="app-ver" content="81d5989e1b">
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#07080c">
@@ -919,7 +919,7 @@ body::before{background:#07080c}
       <tbody id="plans"></tbody>
     </table>
     </div>
-    <div class="hint" id="planhint" style="margin-top:10px">Sıra: önce jig'e uygun planlar (kare ızgara, düz gruplar), sonra az katlı olanlar, sonra yan yana düz sıralar ve kısa süre. Bir satıra dokunun; şeması ve montaj adımları aşağıda açılır.</div>
+    <div class="hint" id="planhint" style="margin-top:10px">Sıra: önce jig'e uygun planlar (kare ızgara, düz gruplar), sonra tek kat, sonra yatık – enine dizilim, sonra az katlı olanlar, yan yana düz sıralar ve kısa süre. Bir satıra dokunun; şeması ve montaj adımları aşağıda açılır.</div>
   </section>
   <div class="golinks">
     <a href="#sema">Montaj şeması <span aria-hidden="true">→</span></a>
@@ -3140,7 +3140,9 @@ const jigTier = p => p.grid.hex ? 2 : p.custom ? 1 : 0;
 // aynı sınıf ve kat sayısında: yan yana düz sıra (klasik jig dizilimi) → blok → uç uca düz sıra → yılan
 // (yılanın grupları tesadüfen dikdörtgen çıksa da yönleri karışık, şerit ölçüleri çok çeşitli olur)
 const lineRank = p => p.snake ? 3 : p.line ? (p.end2end ? 2 : 0) : 1;
-// Sıra ("yeni plan" en üstte): jig'e uygun → az kat → yan yana düz sıra → süre
+// Atölye kuralı: en kolay dizilim "Yatık – enine" (hücre ekseni kutunun genişliği boyunca); önce o hesaba alınır.
+const enineRank = p => p.grid.o.key === "W" ? 0 : 1;
+// Sıra ("yeni plan" en üstte): jig'e uygun → tek kat → yatık enine → az kat → yan yana düz sıra → süre
 function genPlans(R, grids, P){
   const plans = [];
   for (const g of grids){
@@ -3153,7 +3155,7 @@ function genPlans(R, grids, P){
   const out = plans.filter(p => {
     // yılan dizilimi tesadüfen düz çıktıysa, aynı ızgaradaki düz planın kopyasıdır
     if (p.snake && plans.some(q => q !== p && !q.snake && q.grid.id === p.grid.id && Math.abs(q.total - p.total) < 0.01)) return false; const k = p.grid.o.key + "|" + p.grid.hex + "|" + p.shape + "|" + p.Lu + "|" + Math.round(p.total*10); if (seen.has(k)) return false; seen.add(k); return true; });
-  out.sort((a, b) => jigTier(a) - jigTier(b) || a.Lu - b.Lu || lineRank(a) - lineRank(b) || a.total - b.total);
+  out.sort((a, b) => jigTier(a) - jigTier(b) || (a.Lu > 1) - (b.Lu > 1) || enineRank(a) - enineRank(b) || a.Lu - b.Lu || lineRank(a) - lineRank(b) || a.total - b.total);
   return out;
 }
 

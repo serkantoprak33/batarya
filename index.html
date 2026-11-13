@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="tr">
 <head>
-<meta name="app-ver" content="48918565e1">
+<meta name="app-ver" content="900f0b947e">
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#07080c">
@@ -787,16 +787,23 @@ body::before{background:#07080c}
 
   <section class="grp">
     <h2>Kutu <small>iç ölçü</small></h2>
-    <div class="f3">
+    <label class="field" for="kmode"><span class="lbl">Hesap şekli</span>
+      <select id="kmode"><option value="box" selected>Kutu ölçüsünden (kutuya ne sığar)</option><option value="free">Kutusuz: seri × paralel yaz (paket ölçüsü çıksın)</option></select></label>
+    <div class="f2 free-only" hidden>
+      <label class="field" for="sp"><span class="lbl">Dizilim</span><span class="inp"><input id="sp" type="text" autocomplete="off" value="10S5P" placeholder="ör. 10S5P"></span></label>
+      <label class="field" for="kl"><span class="lbl">Kat sayısı</span><select id="kl"><option value="1" selected>1 kat</option><option value="2">2 kat</option><option value="3">3 kat</option><option value="4">4 kat</option></select></label>
+    </div>
+    <div class="hint free-only" id="freehint" hidden>Kutu gerekmez: yazdığınız dizilim kare ızgarada kurulur, 3D'de gösterilir ve paketin uzunluk, genişlik, yükseklik ölçüleri çıkar.</div>
+    <div class="f3 box-only">
       <label class="field" for="L"><span class="lbl">Uzunluk</span><span class="inp"><input id="L" type="text" inputmode="decimal" autocomplete="off" value="320" step="1"><span class="u u-dim">mm</span></span></label>
       <label class="field" for="W"><span class="lbl">Genişlik</span><span class="inp"><input id="W" type="text" inputmode="decimal" autocomplete="off" value="200" step="1"><span class="u u-dim">mm</span></span></label>
       <label class="field" for="H"><span class="lbl">Yükseklik</span><span class="inp"><input id="H" type="text" inputmode="decimal" autocomplete="off" value="180" step="1"><span class="u u-dim">mm</span></span></label>
     </div>
     <div class="f2">
       <label class="field" for="unit"><span class="lbl">Birim</span><select id="unit" autocomplete="off"><option value="1">mm</option><option value="10">cm</option></select></label>
-      <label class="field" for="margin"><span class="lbl">Kenar boşluğu / taraf</span><span class="inp"><input id="margin" type="text" inputmode="decimal" autocomplete="off" value="2" step="0.5"><span class="u">mm</span></span></label>
+      <label class="field box-only" for="margin"><span class="lbl">Kenar boşluğu / taraf</span><span class="inp"><input id="margin" type="text" inputmode="decimal" autocomplete="off" value="2" step="0.5"><span class="u">mm</span></span></label>
     </div>
-    <div class="f2">
+    <div class="f2 box-only">
       <label class="field" for="reserve"><span class="lbl">BMS / kablo payı</span><span class="inp"><input id="reserve" type="text" inputmode="decimal" autocomplete="off" value="0" step="1"><span class="u">mm</span></span></label>
       <label class="field" for="reserveDim"><span class="lbl">Pay hangi ölçüden</span><select id="reserveDim"><option value="L">Uzunluk</option><option value="W">Genişlik</option><option value="H" selected>Yükseklik</option></select></label>
     </div>
@@ -1992,7 +1999,9 @@ const V3 = (() => {
         : `<span class="warn">BMS kutuya sığmıyor</span> (kırmızı kutu dışarıda gösterildi). Yer ayırın ya da daha küçük BMS seçin. B− kablosu BMS'e gider.`;
     }
     const bmsNote = $$("v3d-bms");
-    if (bmsNote) bmsNote.innerHTML = !st.bms ? "BMS gizli. Görmek için “BMS”e dokunun." : !bms ? "" : bms.fits
+    if (bmsNote) bmsNote.innerHTML = !st.bms ? "BMS gizli. Görmek için “BMS”e dokunun." : !bms ? "" : R.free
+      ? `Kutusuz dizilim: BMS (${fmt(R.bms.l)}×${fmt(R.bms.w)}×${fmt(R.bms.h)} mm) paketin yanında gösterildi; ölçüler yalnız hücre bloğunu (nikel ve izolasyon hariç) kapsar.`
+      : bms.fits
       ? `BMS (${fmt(R.bms.l)}×${fmt(R.bms.w)}×${fmt(R.bms.h)} mm) kutuya sığıyor; B− ucuna en yakın boşluğa yerleştirildi (B− ucuna ~${fmt(bms.dist, 0)} mm).`
       : `<span class="warn">BMS (${fmt(R.bms.l)}×${fmt(R.bms.w)}×${fmt(R.bms.h)} mm) kutuya sığmıyor.</span> Kırmızı kutu, kutunun dışında gösterildi. “BMS / kablo payı” ile yer ayırın ya da daha küçük BMS seçin.`;
 
@@ -2105,8 +2114,25 @@ const V3 = (() => {
       });
     }
 
+    // kutusuz: kutu çizilmez; paketin kendi uzunluk / genişlik / yükseklik ölçüleri oklu gösterilir
+    if (R.free && !isSim){
+      const V = THREE.Vector3, ink = new THREE.Color(cssv("--ink"));
+      const lm = new THREE.LineBasicMaterial({color: ink, depthTest: false, transparent: true, opacity: 0.9});
+      const cg = new THREE.ConeGeometry(U * 0.1, U * 0.3, 10), cm = new THREE.MeshBasicMaterial({color: ink, depthTest: false, transparent: true});
+      const fdim = (a, b, off, text) => {
+        const pa = a.clone().add(off), pb = b.clone().add(off), on = off.clone().normalize().multiplyScalar(U * 0.22);
+        const ls = new THREE.LineSegments(new THREE.BufferGeometry().setFromPoints([a, pa.clone().add(on), b, pb.clone().add(on), pa, pb]), lm); ls.renderOrder = 8; pack.add(ls);
+        const d = pb.clone().sub(pa); if (d.length() < 1e-6) return; d.normalize();
+        [[pa, d.clone().negate()], [pb, d]].forEach(([p, dir]) => { const cn = new THREE.Mesh(cg, cm); cn.position.copy(p).addScaledVector(dir, -U * 0.15); cn.quaternion.setFromUnitVectors(up, dir); cn.renderOrder = 8; pack.add(cn); });
+        const lb = label(text, U, "rgba(47,91,230,.95)", "#ffffff", 0.85); lb.position.copy(pa.clone().add(pb).multiplyScalar(0.5)); pack.add(lb);
+      };
+      const x0 = pmin.x, x1 = pmax.x, y0 = pmin.y, y1 = pmax.y, z0 = pmin.z, z1 = pmax.z;
+      fdim(new V(x0, y0, z1), new V(x1, y0, z1), new V(0, 0, U * 1.2), `Uzunluk ${fmt(x1 - x0, 0)} mm`);
+      fdim(new V(x1, y0, z0), new V(x1, y0, z1), new V(U * 1.2, 0, 0), `Genişlik ${fmt(z1 - z0, 0)} mm`);
+      fdim(new V(x0, y0, z1), new V(x0, y1, z1), new V(-U * 0.9, 0, U * 0.9), `Yükseklik ${fmt(y1 - y0, 0)} mm`);
+    }
     // kutu ve ölçüleri
-    if (st.box){
+    if (st.box && !R.free){
       const bg = new THREE.BoxGeometry(B.L, B.H, B.W);
       pack.add(new THREE.LineSegments(new THREE.EdgesGeometry(bg), new THREE.LineBasicMaterial({color: new THREE.Color(cssv("--box"))})));
       pack.add(new THREE.Mesh(bg, new THREE.MeshBasicMaterial({color: new THREE.Color(cssv("--accent")), transparent: true, opacity: 0.05, depthWrite: false})));
@@ -2119,7 +2145,7 @@ const V3 = (() => {
     }
 
     // ---- ölçü çizgileri (teknik çizim gibi) ----
-    if (st.dims){
+    if (st.dims && !R.free){
       const V = THREE.Vector3, ink = new THREE.Color(cssv("--ink"));
       const lm = new THREE.LineBasicMaterial({color: ink, depthTest: false, transparent: true, opacity: 0.9});
       const cg = new THREE.ConeGeometry(U * 0.1, U * 0.3, 10), cm = new THREE.MeshBasicMaterial({color: ink, depthTest: false, transparent: true});
@@ -2153,7 +2179,7 @@ const V3 = (() => {
 
     // ---- duvarlar ve menteşeli kapak ----
     lidObj = null;
-    if (st.walls || st.lid || lidAng < LID_OPEN - 1e-3){
+    if (!R.free && (st.walls || st.lid || lidAng < LID_OPEN - 1e-3)){
       const t = Math.max(2, Math.min(5, diag * 0.006)), edgeC = new THREE.Color(cssv("--box"));
       if (st.walls){
         // vitrin kutusu: fırçalanmış alüminyum taban ve çerçeve, füme cam yan duvarlar
@@ -2362,7 +2388,7 @@ const V3 = (() => {
     const {diag, D} = fitDist();
     camera.near = diag / 200; camera.far = diag * (fx ? 6 : 40); camera.updateProjectionMatrix();
     const tt = target ? target.clone() : new THREE.Vector3();
-    const d1 = D * k * (camera.aspect < 1 ? 1.18 : 1);   // dik telefon ekranında biraz geri çekil
+    const d1 = D * k * (camera.aspect < 1 ? 1.18 : 1) * (cur && cur.R.free ? 1.45 : 1);   // dik telefonda ve kutusuzda (ölçü etiketleri) biraz geri çekil
     if (instant){ fly = null; controls.target.copy(tt); camera.position.copy(tt.clone().add(dir.clone().multiplyScalar(d1))); controls.update(); needs = true; return; }
     const rel = camera.position.clone().sub(controls.target);
     fly = {from: rel.clone().normalize(), to: dir.clone(), d0: rel.length(), d1, t: 0, tf: controls.target.clone(), tt, dur: dur || 0.9};
@@ -2862,20 +2888,41 @@ function hexPack(a, b, d, p){
   return best.rows.filter(r => r.length).map(r => r.map(c => ({x: c.x + ox, y: c.y + oy})));
 }
 
+// "10S5P", "10s 5p", "10 S 5 P" → {S: 10, P: 5}
+function parseSP(t){
+  const m = String(t || "").match(/(\d+)\s*s\s*(\d+)\s*p/i);
+  return m ? {S: parseInt(m[1]), P: parseInt(m[2])} : null;
+}
+const isFree = () => $("kmode") && $("kmode").value === "free";
 function readInputs(){
   const u = num("unit") || 1;
-  const box = {L: num("L")*u, W: num("W")*u, H: num("H")*u};
-  const m = Math.max(0, num("margin")), res = Math.max(0, num("reserve")), resDim = $("reserveDim").value;
+  const d = num("dia"), gap = Math.max(0, num("gap")), len = num("len"), lgap = Math.max(0, num("lgap")), p = d + gap;
+  let box = {L: num("L")*u, W: num("W")*u, H: num("H")*u};
+  let m = Math.max(0, num("margin")), res = Math.max(0, num("reserve"));
+  const resDim = $("reserveDim").value;
+  let S = Math.round(num("s")), free = null;
+  // kutusuz: yazılan dizilime tam oturan sanal kutu (gruplar yan yana sütun, her grup P hücre); kutu ölçüsü = paket ölçüsü
+  if (isFree()){
+    const sp = parseSP($("sp").value);
+    if (sp && sp.S >= 1 && sp.P >= 1){
+      const Lu = Math.max(1, Math.min(4, parseInt($("kl").value) || 1));
+      const gS = Math.ceil(sp.S / Lu);
+      const along = n => d + (n - 1) * p + 0.6;   // n hücre yan yana (0,6 mm pay: yuvarlama)
+      box = {L: along(Math.max(gS, sp.P)), W: along(Math.min(gS, sp.P)), H: len + (Lu - 1) * (len + lgap) + 0.6};
+      S = sp.S; m = 0; res = 0;
+      free = {S: sp.S, P: sp.P, Lu};
+      if ($("s").value !== String(S)) $("s").value = S;
+    } else free = {bad: true};
+  }
   const usable = {}, off = {};
   for (const k of ["L","W","H"]){
     usable[k] = Math.max(0, box[k] - 2*m - (k === resDim ? res : 0));
     off[k] = m + (k === resDim ? res : 0);   // pay kutunun başında bırakılır
   }
-  const d = num("dia"), gap = Math.max(0, num("gap"));
   const labor = {};
   ["cell","weld","strip","type","custom","turn","module","design","bal","balHard","hex"].forEach(k => labor[k] = num("lb_"+k));
-  return {box, usable, off, m, d, len: num("len"), gap, lgap: Math.max(0, num("lgap")), p: d + gap,
-    S: Math.round(num("s")), cv: num("cv"), ah: num("ah"), wt: num("wt"), crate: num("crate"), labor, chem: $("chem").value,
+  return {box, usable, off, m, d, len, gap, lgap, p, free,
+    S, cv: num("cv"), ah: num("ah"), wt: num("wt"), crate: num("crate"), labor, chem: $("chem").value,
     bms: {l: num("bms_l"), w: num("bms_w"), h: num("bms_h")}};
 }
 
@@ -3216,6 +3263,7 @@ const TEK_KAT_KAYIP = 0.20;   // tek kat, en yüksek kapasiteden en çok bu oran
 // Boş, sıfır ya da yanlış birimle girilmiş değerler telefonu kilitleyecek kadar büyük hesaba yol açmasın
 function checkInputs(R){
   const B = R.box;
+  if (R.free && R.free.bad) return "Dizilimi “10S5P” gibi yazın (seri sayısı S, paralel sayısı P).";
   if (!(B.L > 0 && B.W > 0 && B.H > 0)) return "Kutu ölçülerini girin.";
   if (!(R.d >= 5 && R.d <= 120)) return "Hücre çapını girin (5–120 mm).";
   if (!(R.len >= 10 && R.len <= 400)) return "Hücre boyunu girin (10–400 mm).";
@@ -3326,7 +3374,8 @@ function render(){
   const geoKey = [R.box.L, R.box.W, R.box.H, R.m, R.off.L, R.off.W, R.off.H, R.d, R.len, R.gap, R.lgap, R.S].join("|");
   const hadGeo = lastS !== null, sChanged = lastS !== geoKey; lastS = geoKey;
   if (sChanged && hadGeo && !restoreP) selectedPlanId = null;   // kutu / hücre / seri değişti: önce yine önerilen plan gelsin
-  const pWant = (!sChanged && pInfo.some(x => x.P === prev)) ? prev
+  const pWant = (R.free && pInfo.some(x => x.P === R.free.P)) ? R.free.P   // kutusuz: yazılan P
+    : (!sChanged && pInfo.some(x => x.P === prev)) ? prev
     : (restoreP && pInfo.some(x => x.P === restoreP)) ? restoreP : recP;
   restoreP = null;
   $("psel").value = pWant;
@@ -3392,7 +3441,8 @@ function render(){
         <div><dt>Nominal</dt><dd><span class="num" data-v="${vNom}" data-k="1">${fmt(vNom,1)}</span><small> V</small></dd></div>
         <div><dt>Enerji</dt><dd><span class="num" data-v="${R.S*R.cv*P*R.ah/1000}" data-k="2">${fmt(R.S*R.cv*P*R.ah/1000,2)}</span><small> kWh</small></dd></div>
         <div><dt>Şarj / boş</dt><dd><span class="num" data-v="${R.S*cdv.vmax}" data-k="1">${fmt(R.S*cdv.vmax,1)}</span><small> / ${fmt(R.S*cdv.vmin,1)} V</small></dd></div>
-        <div><dt>Kutu doluluğu</dt><dd><span class="num" data-v="${fillPct}" data-k="0">${fillPct}</span><small> % · en çok ${maxCells} hücre</small></dd></div>
+        ${R.free ? (pd => `<div><dt>Paket ölçüsü (U × G × Y)</dt><dd>${fmt(pd.L, 0)}<small> × </small>${fmt(pd.W, 0)}<small> × </small>${fmt(pd.H, 0)}<small> mm</small></dd></div>`)(packDims(R, sel))
+          : `<div><dt>Kutu doluluğu</dt><dd><span class="num" data-v="${fillPct}" data-k="0">${fillPct}</span><small> % · en çok ${maxCells} hücre</small></dd></div>`}
       </dl>
     </div>
     <div class="plate-foot">
@@ -3588,6 +3638,15 @@ function renderKK(c){
 
 /* ---------- Sıkı sığma uyarısı ---------- */
 // Her yönde hücrelerin kapladığı yer ile kullanılabilir alan arasındaki toplam pay (kenar boşluğu hariç)
+// paketin dış ölçüsü (hücre bloğu; nikel, tutucu ve izolasyon hariç), kutu yönlerine göre
+function packDims(R, pl){
+  const g = pl.grid, cells = pl.layers.flatMap(l => l.flatMap(x => x.cells));
+  const xs = cells.map(c => c.x), ys = cells.map(c => c.y), out = {};
+  out[g.o.a] = Math.max(...xs) - Math.min(...xs) + R.d;
+  out[g.o.b] = Math.max(...ys) - Math.min(...ys) + R.d;
+  out[g.o.c] = pl.Lu * R.len + (pl.Lu - 1) * R.lgap;
+  return out;
+}
 function planSlack(R, pl){
   const g = pl.grid, cells = pl.layers.flatMap(l => l.flatMap(x => x.cells));
   const xs = cells.map(c => c.x), ys = cells.map(c => c.y);
@@ -3598,6 +3657,7 @@ function planSlack(R, pl){
   ];
 }
 function tightNote(R, pl){
+  if (R.free) return "";   // kutusuz: kutu paketin kendisi, pay uyarısı anlamsız
   const tight = planSlack(R, pl).filter(([, v]) => v < 3).sort((a, b) => a[1] - b[1]);
   if (!tight.length) return "";
   const [dim, v] = tight[0];
@@ -5470,6 +5530,13 @@ $("preset").onchange = () => {
   }
   render();
 };
+// kutu ölçüsünden / kutusuz (seri × paralel yazılır) geçişi
+function applyMode(){
+  const free = isFree();
+  document.querySelectorAll(".free-only").forEach(el => { el.hidden = !free; el.style.display = free ? "" : "none"; });
+  document.querySelectorAll(".box-only").forEach(el => { el.hidden = free; el.style.display = free ? "none" : ""; });
+}
+$("kmode").addEventListener("change", applyMode);
 $("chem").onchange = () => {
   const p = PRESETS[$("preset").value];
   if (p && p.chem !== $("chem").value) $("preset").value = "custom";
@@ -5513,6 +5580,7 @@ function loadState(){
   document.querySelectorAll(".u-dim").forEach(e => e.textContent = $("unit").value === "10" ? "cm" : "mm");
 }
 loadState();
+applyMode();
 document.addEventListener("change", saveState);
 document.addEventListener("input", () => { clearTimeout(saveT); saveT = setTimeout(saveState, 300); });
 

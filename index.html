@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="tr">
 <head>
-<meta name="app-ver" content="900f0b947e">
+<meta name="app-ver" content="412c7a42f0">
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#07080c">
@@ -792,6 +792,10 @@ body::before{background:#07080c}
     <div class="f2 free-only" hidden>
       <label class="field" for="sp"><span class="lbl">Dizilim</span><span class="inp"><input id="sp" type="text" autocomplete="off" value="10S5P" placeholder="ör. 10S5P"></span></label>
       <label class="field" for="kl"><span class="lbl">Kat sayısı</span><select id="kl"><option value="1" selected>1 kat</option><option value="2">2 kat</option><option value="3">3 kat</option><option value="4">4 kat</option></select></label>
+    </div>
+    <div class="f2 free-only" hidden>
+      <label class="field" for="izo"><span class="lbl">İzolasyon kağıdı (her yüz)</span><span class="inp"><input id="izo" type="text" inputmode="decimal" autocomplete="off" value="0.5" step="0.1"><span class="u">mm</span></span></label>
+      <label class="field" for="izo_kat"><span class="lbl">Kağıt kat sayısı</span><select id="izo_kat"><option value="1" selected>1 kat</option><option value="2">2 kat</option></select></label>
     </div>
     <div class="hint free-only" id="freehint" hidden>Kutu gerekmez: yazdığınız dizilim kare ızgarada kurulur, 3D'de gösterilir ve paketin uzunluk, genişlik, yükseklik ölçüleri çıkar.</div>
     <div class="f3 box-only">
@@ -1946,7 +1950,7 @@ const V3 = (() => {
     const perms = [[0,1,2],[0,2,1],[1,0,2],[1,2,0],[2,0,1],[2,1,0]];
     const g0 = pl.groups[0], bMinus = pos(g0.c.x, g0.c.y, faceC(g0.L, minusFace(g0), lift));
     let bms = null;
-    const wantBms = st.bms && bd.every(v => v > 0);
+    const wantBms = st.bms && bd.every(v => v > 0) && !(R.free && st.wrap);   // kutusuz bitmiş pakette BMS kaplamanın dışında ayrı durmasın
     if (wantBms) for (const k of ["x", "y", "z"]) for (const sd of [-1, 1]){
       const thick = sd < 0 ? pmin[k] + inner[k] : inner[k] - pmax[k];
       const oth = ["x", "y", "z"].filter(q => q !== k);
@@ -1999,7 +2003,8 @@ const V3 = (() => {
         : `<span class="warn">BMS kutuya sığmıyor</span> (kırmızı kutu dışarıda gösterildi). Yer ayırın ya da daha küçük BMS seçin. B− kablosu BMS'e gider.`;
     }
     const bmsNote = $$("v3d-bms");
-    if (bmsNote) bmsNote.innerHTML = !st.bms ? "BMS gizli. Görmek için “BMS”e dokunun." : !bms ? "" : R.free
+    if (bmsNote) bmsNote.innerHTML = (R.free && st.wrap) ? "Bitmiş paket: ölçüler izolasyon kağıdı ve nikel dahil; BMS ayrı parça olduğu için gösterilmez."
+      : !st.bms ? "BMS gizli. Görmek için “BMS”e dokunun." : !bms ? "" : R.free
       ? `Kutusuz dizilim: BMS (${fmt(R.bms.l)}×${fmt(R.bms.w)}×${fmt(R.bms.h)} mm) paketin yanında gösterildi; ölçüler yalnız hücre bloğunu (nikel ve izolasyon hariç) kapsar.`
       : bms.fits
       ? `BMS (${fmt(R.bms.l)}×${fmt(R.bms.w)}×${fmt(R.bms.h)} mm) kutuya sığıyor; B− ucuna en yakın boşluğa yerleştirildi (B− ucuna ~${fmt(bms.dist, 0)} mm).`
@@ -2126,10 +2131,20 @@ const V3 = (() => {
         [[pa, d.clone().negate()], [pb, d]].forEach(([p, dir]) => { const cn = new THREE.Mesh(cg, cm); cn.position.copy(p).addScaledVector(dir, -U * 0.15); cn.quaternion.setFromUnitVectors(up, dir); cn.renderOrder = 8; pack.add(cn); });
         const lb = label(text, U, "rgba(47,91,230,.95)", "#ffffff", 0.85); lb.position.copy(pa.clone().add(pb).multiplyScalar(0.5)); pack.add(lb);
       };
-      const x0 = pmin.x, x1 = pmax.x, y0 = pmin.y, y1 = pmax.y, z0 = pmin.z, z1 = pmax.z;
-      fdim(new V(x0, y0, z1), new V(x1, y0, z1), new V(0, 0, U * 1.2), `Uzunluk ${fmt(x1 - x0, 0)} mm`);
-      fdim(new V(x1, y0, z0), new V(x1, y0, z1), new V(U * 1.2, 0, 0), `Genişlik ${fmt(z1 - z0, 0)} mm`);
-      fdim(new V(x0, y0, z1), new V(x0, y1, z1), new V(-U * 0.9, 0, U * 0.9), `Yükseklik ${fmt(y1 - y0, 0)} mm`);
+      // izolasyon kağıdı + nikel dahil bitmiş ölçü (kutu yönü → dünya ekseni: L=x, H=y, W=z)
+      const fp = finishPad(R, o.c);
+      const x0 = pmin.x - fp.L, x1 = pmax.x + fp.L, y0 = pmin.y - fp.H, y1 = pmax.y + fp.H, z0 = pmin.z - fp.W, z1 = pmax.z + fp.W;
+      fdim(new V(x0, y0, z1), new V(x1, y0, z1), new V(0, 0, U * 1.2), `Uzunluk ${fmt(x1 - x0, 1)} mm`);
+      fdim(new V(x1, y0, z0), new V(x1, y0, z1), new V(U * 1.2, 0, 0), `Genişlik ${fmt(z1 - z0, 1)} mm`);
+      fdim(new V(x0, y0, z1), new V(x0, y1, z1), new V(-U * 0.9, 0, U * 0.9), `Yükseklik ${fmt(y1 - y0, 1)} mm`);
+      // izolasyon kağıdı: hücre bloğunu saran ince, açık renkli kılıf (bitmiş paket açıkken onun altında kalır)
+      if (!st.wrap && fp.L + fp.W + fp.H > 0){
+        const pg = new THREE.BoxGeometry(x1 - x0, y1 - y0, z1 - z0);
+        const pe = new THREE.LineSegments(new THREE.EdgesGeometry(pg), new THREE.LineBasicMaterial({color: 0xd8c9a3, transparent: true, opacity: 0.8}));
+        pe.position.set((x0 + x1) / 2, (y0 + y1) / 2, (z0 + z1) / 2); pack.add(pe);
+        const pm = new THREE.Mesh(pg, new THREE.MeshBasicMaterial({color: 0xe9dcb8, transparent: true, opacity: 0.07, depthWrite: false}));
+        pm.position.copy(pe.position); pm.userData.noAR = true; pack.add(pm);
+      }
     }
     // kutu ve ölçüleri
     if (st.box && !R.free){
@@ -2251,8 +2266,13 @@ const V3 = (() => {
 
     // ---- bitmiş paket: ısıyla daralan PVC ile sarılmış blok ve ön yüzde etiket ----
     if (st.wrap){
-      const bv = Math.min(6, Math.min(pmax.x - pmin.x, pmax.y - pmin.y, pmax.z - pmin.z) * 0.08), rc = Math.min(10, Math.min(pmax.x - pmin.x, pmax.y - pmin.y) * 0.12);
-      const pad = T + 1.8 + 0.42 * Math.max(bv, rc), sx = pmax.x - pmin.x + 2 * pad, sy = pmax.y - pmin.y + 2 * pad, sz = pmax.z - pmin.z + 2 * pad;
+      // kutusuz: kaplama hücreye sıkı oturur, köşeler hücreleri kesmesin diye neredeyse keskin
+      const bv = R.free ? 0.4 : Math.min(6, Math.min(pmax.x - pmin.x, pmax.y - pmin.y, pmax.z - pmin.z) * 0.08), rc = R.free ? 1 : Math.min(10, Math.min(pmax.x - pmin.x, pmax.y - pmin.y) * 0.12);
+      const pad = T + 1.8 + 0.42 * Math.max(bv, rc);
+      // kutusuz: kaplama tam bitmiş ölçüde (izolasyon + nikel), ölçü oklarıyla aynı
+      // (3D'de nikel görünür olsun diye kalın çizilir: kaplama onu örtecek kadar, en az T + 0,5 mm uzak durur)
+      const wf = R.free ? (fp0 => { const vk = {L: 0.5, W: 0.5, H: 0.5}; vk[o.c] = T + 0.5; return {L: Math.max(fp0.L, vk.L), W: Math.max(fp0.W, vk.W), H: Math.max(fp0.H, vk.H)}; })(finishPad(R, o.c)) : null;
+      const sx = pmax.x - pmin.x + 2 * (wf ? wf.L : pad), sy = pmax.y - pmin.y + 2 * (wf ? wf.H : pad), sz = pmax.z - pmin.z + 2 * (wf ? wf.W : pad);
       const w2 = sx / 2 - bv, h2 = sy / 2 - bv, r2 = Math.min(rc, w2 * 0.9, h2 * 0.9);
       const sh = new THREE.Shape();
       sh.moveTo(-w2 + r2, -h2); sh.lineTo(w2 - r2, -h2); sh.quadraticCurveTo(w2, -h2, w2, -h2 + r2); sh.lineTo(w2, h2 - r2); sh.quadraticCurveTo(w2, h2, w2 - r2, h2);
@@ -2910,7 +2930,10 @@ function readInputs(){
       const along = n => d + (n - 1) * p + 0.6;   // n hücre yan yana (0,6 mm pay: yuvarlama)
       box = {L: along(Math.max(gS, sp.P)), W: along(Math.min(gS, sp.P)), H: len + (Lu - 1) * (len + lgap) + 0.6};
       S = sp.S; m = 0; res = 0;
-      free = {S: sp.S, P: sp.P, Lu};
+      // bitmiş ölçü: her yüzde izolasyon kağıdı, hücre uçlarında ayrıca nikel şerit (Akım ve menzil'deki kalınlık)
+      const izo = Math.max(0, Math.min(5, num("izo"))) * (parseInt($("izo_kat").value) || 1);
+      const nk = parseFloat($("n_t") ? $("n_t").value : "0.15") || 0.15;
+      free = {S: sp.S, P: sp.P, Lu, izo, nk};
       if ($("s").value !== String(S)) $("s").value = S;
     } else free = {bad: true};
   }
@@ -3441,7 +3464,7 @@ function render(){
         <div><dt>Nominal</dt><dd><span class="num" data-v="${vNom}" data-k="1">${fmt(vNom,1)}</span><small> V</small></dd></div>
         <div><dt>Enerji</dt><dd><span class="num" data-v="${R.S*R.cv*P*R.ah/1000}" data-k="2">${fmt(R.S*R.cv*P*R.ah/1000,2)}</span><small> kWh</small></dd></div>
         <div><dt>Şarj / boş</dt><dd><span class="num" data-v="${R.S*cdv.vmax}" data-k="1">${fmt(R.S*cdv.vmax,1)}</span><small> / ${fmt(R.S*cdv.vmin,1)} V</small></dd></div>
-        ${R.free ? (pd => `<div><dt>Paket ölçüsü (U × G × Y)</dt><dd>${fmt(pd.L, 0)}<small> × </small>${fmt(pd.W, 0)}<small> × </small>${fmt(pd.H, 0)}<small> mm</small></dd></div>`)(packDims(R, sel))
+        ${R.free ? (pd => `<div><dt>Bitmiş ölçü (U × G × Y)</dt><dd>${fmt(pd.L, 1)}<small> × </small>${fmt(pd.W, 1)}<small> × </small>${fmt(pd.H, 1)}<small> mm · izolasyon + nikel dahil (hücre bloğu ${fmt(pd.block.L, 0)} × ${fmt(pd.block.W, 0)} × ${fmt(pd.block.H, 0)})</small></dd></div>`)(packDims(R, sel))
           : `<div><dt>Kutu doluluğu</dt><dd><span class="num" data-v="${fillPct}" data-k="0">${fillPct}</span><small> % · en çok ${maxCells} hücre</small></dd></div>`}
       </dl>
     </div>
@@ -3638,13 +3661,21 @@ function renderKK(c){
 
 /* ---------- Sıkı sığma uyarısı ---------- */
 // Her yönde hücrelerin kapladığı yer ile kullanılabilir alan arasındaki toplam pay (kenar boşluğu hariç)
-// paketin dış ölçüsü (hücre bloğu; nikel, tutucu ve izolasyon hariç), kutu yönlerine göre
+// kutusuz paketin her yöndeki ek kalınlığı (bir yüz): izolasyon kağıdı; hücre ekseni yönünde ayrıca nikel
+function finishPad(R, cKey){
+  const f = R.free || {}, izo = f.izo || 0, nk = f.nk || 0, out = {};
+  ["L", "W", "H"].forEach(k => out[k] = izo + (k === cKey ? nk : 0));
+  return out;
+}
+// paketin dış ölçüsü, kutu yönlerine göre: hücre bloğu (block) ve izolasyon + nikel dahil bitmiş ölçü
 function packDims(R, pl){
   const g = pl.grid, cells = pl.layers.flatMap(l => l.flatMap(x => x.cells));
-  const xs = cells.map(c => c.x), ys = cells.map(c => c.y), out = {};
-  out[g.o.a] = Math.max(...xs) - Math.min(...xs) + R.d;
-  out[g.o.b] = Math.max(...ys) - Math.min(...ys) + R.d;
-  out[g.o.c] = pl.Lu * R.len + (pl.Lu - 1) * R.lgap;
+  const xs = cells.map(c => c.x), ys = cells.map(c => c.y), block = {};
+  block[g.o.a] = Math.max(...xs) - Math.min(...xs) + R.d;
+  block[g.o.b] = Math.max(...ys) - Math.min(...ys) + R.d;
+  block[g.o.c] = pl.Lu * R.len + (pl.Lu - 1) * R.lgap;
+  const pad = finishPad(R, g.o.c), out = {block};
+  ["L", "W", "H"].forEach(k => out[k] = block[k] + 2 * pad[k]);
   return out;
 }
 function planSlack(R, pl){

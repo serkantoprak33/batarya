@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="tr">
 <head>
-<meta name="app-ver" content="7daec17cad">
+<meta name="app-ver" content="86d990f802">
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#07080c">
@@ -1681,12 +1681,13 @@ const V3 = (() => {
     const diag = Math.hypot(B.L, B.W, B.H), U = diag / 22;
     const css = getComputedStyle(document.documentElement), cssv = n => css.getPropertyValue(n).trim() || "#888888";
     const flipA = o.key === "L", flipB = o.b === "H";   // 2D şemalarla aynı yönde görünsün
+    let shiftY = 0;   // paket kutunun tabanına oturur (aşağıda hesaplanır)
     const pos = (x, y, c) => {
       let a = R.off[o.a] + x, b = R.off[o.b] + y;
       if (flipA) a = B[o.a] - a;
       if (flipB) b = B[o.b] - b;
       const v = {x: 0, y: 0, z: 0}; v[AX[o.a]] = a; v[AX[o.b]] = b; v[AX[o.c]] = c;
-      return new THREE.Vector3(v.x - B.L / 2, v.y - B.H / 2, v.z - B.W / 2);
+      return new THREE.Vector3(v.x - B.L / 2, v.y - B.H / 2 + shiftY, v.z - B.W / 2);
     };
     const axis = new THREE.Vector3(); axis[AX[o.c]] = 1;
     const up = new THREE.Vector3(0, 1, 0);
@@ -1698,6 +1699,16 @@ const V3 = (() => {
     const r = R.d / 2, capT = 0.6, nipH = Math.min(1.6, Math.max(0.8, R.d * 0.03)), T = 0.8;
     // Hücre boyu + başlığı dahil ölçülür: her hücre [c0, c0 + boy] aralığında kalır; nikel bu iki yüzeye oturur
     const faceC = (L, face, extra = 0) => face === "top" ? c0(L) + R.len + extra : c0(L) - extra;
+    // paket havada durmaz: hücre bloğunun en alt noktası kutu tabanının (kenar boşluğu kadar) üstüne iner.
+    // Dik dizilimde katlar tabandan yukarı, yatık dizilimde sıralar tabandan başlar; boş kalan yer üstte olur.
+    {
+      let mn = Infinity; const vert = AX[o.c] === "y";
+      pl.layers.forEach((lay, L) => lay.forEach(grp => grp.cells.forEach(c => {
+        const cb = startC + L * (R.len + R.lgap);
+        mn = Math.min(mn, pos(c.x, c.y, cb).y - (vert ? 0 : r), pos(c.x, c.y, cb + R.len).y - (vert ? 0 : r));
+      })));
+      if (isFinite(mn)) shiftY = (-B.H / 2 + (R.m || 0)) - mn;
+    }
     const m4 = new THREE.Matrix4(), one = new THREE.Vector3(1, 1, 1), color = new THREE.Color();
     const [fTop, fBot] = faceNames(o);
     const plusFace = grp => grp.top === "+" ? "top" : "bot", minusFace = grp => grp.top === "-" ? "top" : "bot";

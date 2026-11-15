@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="tr">
 <head>
-<meta name="app-ver" content="b2ae4c1924">
+<meta name="app-ver" content="37b73cbce5">
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#07080c">
@@ -2723,7 +2723,12 @@ const V3 = (() => {
       {cap: "Önden · uzunluk × yükseklik", view: "front", dur: 3.2},
       {cap: "Yandan · genişlik × yükseklik", view: "side", dur: 3.2},
       {cap: "Üstten · uzunluk × genişlik", view: "top", dur: 3.2},
-      {cap: "Bitmiş paket", view: "iso", dur: 4.2, wrap: true},
+      // bitmiş pakete aşamalı geçiş: kutu duvarları belirir, kapak kapanır, sonra yumuşak geçişle bitmiş paket
+      ...(R.free ? [] : [
+        {cap: "Kutuya yerleşir", view: "iso", dur: 2.8, walls: true, fade: 0.9, box: true},
+        {cap: "Kapak kapanır", view: "iso", dur: 2.8, walls: true, lid: true, box: true},
+      ]),
+      {cap: "Bitmiş paket", view: "iso", dur: 4.6, wrap: true, fade: 1.2},
     ];
     const total = scenes.reduce((s, x) => s + x.dur, 0);
     const out = document.createElement("canvas"); out.width = W; out.height = H;
@@ -2747,22 +2752,39 @@ const V3 = (() => {
       g.textBaseline = "middle"; g.textAlign = "left"; g.fillStyle = "#ffffff"; g.font = font(700, u * 2.6, disp);
       g.fillText("KADRO TEKNOLOJİ", u * 2.4 + ls + u * 1.2, u * 2.2 + ls * 0.38);
       g.fillStyle = "#ff8f1f"; g.font = font(500, u * 1.25, mono);
-      g.fillText("Kadro Tasarım · batarya paketi", u * 2.4 + ls + u * 1.2, u * 2.2 + ls * 0.8);
+      g.fillText("batarya paketi tasarımı", u * 2.4 + ls + u * 1.2, u * 2.2 + ls * 0.8);
+      // sağ üst köşe: KADRO TASARIM yazısı logo gibi
+      g.textAlign = "right"; g.font = font(800, u * 2.5, disp);
+      const kx = W - u * 2.6, ky = u * 4.1, kw = g.measureText("KADRO TASARIM").width;
+      g.fillStyle = "#ffffff"; g.fillText("KADRO TASARIM", kx, ky);
+      g.fillStyle = "#ff8f1f"; g.fillRect(kx - kw, ky + u * 1.55, kw * 0.42, u * 0.32);
+      g.fillStyle = "#3d6bff"; g.fillRect(kx - kw * 0.55, ky + u * 1.55, kw * 0.55, u * 0.32);
+      g.textAlign = "left";
     };
-    let t0 = 0, si = -1, raf = 0;
+    let t0 = 0, si = -1, raf = 0, clock = 0, lastNow = 0;
+    let fadeCv = null, fadeAt = 0, fadeDur = 0;
     const goScene = i => {
       si = i; const sc = scenes[i];
-      if (!!sc.wrap !== st.wrap){ st.wrap = !!sc.wrap; build(); }
-      flyTo(dirFor(sc.view), kk, i === 0, ctr, 1.1);
+      // yumuşak geçiş: son kare saklanır, yeni görüntünün üstünde yavaşça kaybolur
+      if (sc.fade && i > 0){ fadeCv = fadeCv || document.createElement("canvas"); fadeCv.width = W; fadeCv.height = H; fadeCv.getContext("2d").drawImage(cv0, 0, 0, W, H); fadeAt = performance.now(); fadeDur = sc.fade * 1000; }
+      const want = {wrap: !!sc.wrap, walls: !!sc.walls, lid: !!sc.lid};
+      if (want.lid && !st.lid) lidAng = LID_OPEN;   // kapak açıktan kapanarak gelir
+      if (!want.lid && st.lid) lidAng = LID_OPEN;   // bitmiş pakete geçerken kapak yeniden açılmasın, hemen kalksın
+      if (want.wrap !== st.wrap || want.walls !== st.walls || want.lid !== st.lid){ Object.assign(st, want); build(); }
+      // kutulu sahnelerde kutunun tamamı kadraja girer; diğerlerinde kamera pakete yaklaşır
+      if (sc.box) flyTo(dirFor(sc.view), 0.86, false, new THREE.Vector3(0, -B.H * 0.2, 0), 1.8);
+      else flyTo(dirFor(sc.view), kk, i === 0, ctr, sc.wrap ? 2.0 : 1.1);
     };
     const draw = now => {
-      if (!t0){ t0 = now; goScene(0); }
-      const t = (now - t0) / 1000;
+      if (!t0){ t0 = now; lastNow = now; goScene(0); }
+      clock += Math.min(0.2, (now - lastNow) / 1000);   // yalnız uzun takılmada durur; yavaş bilgisayarda ağır çekime dönmez lastNow = now;
+      const t = clock;
       let acc = 0, want = scenes.length - 1;
       for (let i = 0; i < scenes.length; i++){ if (t < acc + scenes[i].dur){ want = i; break; } acc += scenes[i].dur; }
       if (want !== si) goScene(want);
       g.fillStyle = "#07080c"; g.fillRect(0, 0, W, H);
       g.drawImage(cv0, 0, 0, W, H);
+      if (fadeCv){ const a = 1 - (now - fadeAt) / fadeDur; if (a > 0){ g.globalAlpha = a; g.drawImage(fadeCv, 0, 0); g.globalAlpha = 1; } else fadeCv = null; }
       brand();
       // sahne yazısı
       const cap = scenes[si].cap.toLocaleUpperCase("tr");
@@ -2783,6 +2805,12 @@ const V3 = (() => {
       if (t >= total){ recd.stop(); return; }
       raf = requestAnimationFrame(draw);
     };
+    // ısınma: duvar, kapak ve kaplama ilk çizimde birkaç saniye takılabiliyor; kayıttan önce bir kez hazırlanır
+    try {
+      [{walls: !R.free, lid: !R.free}, {wrap: true}].forEach(w => { Object.assign(st, {walls: false, lid: false, wrap: false}, w); lidAng = st.lid ? 0 : LID_OPEN; build(); renderer.compile(scene, camera); renderer.render(scene, camera); });
+    } catch (e){}
+    Object.assign(st, {walls: false, lid: false, wrap: false}); lidAng = LID_OPEN; build();
+    await new Promise(r => setTimeout(r, 150));
     try {
       recd.start(500);
       raf = requestAnimationFrame(draw);
@@ -2790,7 +2818,7 @@ const V3 = (() => {
     } catch (e){ try { recd.stop(); } catch (err) {} }
     cancelAnimationFrame(raf); stream.getTracks().forEach(t => t.stop());
     // eski görünüm ve kamera
-    delete st.vdims; Object.assign(st, keep);
+    delete st.vdims; Object.assign(st, keep); lidAng = keep.lid ? 0 : LID_OPEN;
     renderer.setPixelRatio(pr); renderer.setSize(sz.x, sz.y, false); camera.aspect = asp; camera.updateProjectionMatrix();
     recording = false;
     build(); fly = null; camera.position.copy(camP); controls.target.copy(camT); controls.update();

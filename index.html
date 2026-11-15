@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="tr">
 <head>
-<meta name="app-ver" content="412c7a42f0">
+<meta name="app-ver" content="feed381f03">
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#07080c">
@@ -3391,7 +3391,7 @@ function render(){
     if (x.single) tags.push("tek kat");
     else if (!x.clean) tags.push("sadece düzensiz");
     else if (!x.square) tags.push("sadece petek");
-    return `<option value="${x.P}">${R.S}S${x.P}P — ${fmt(x.P*R.ah)} Ah${tags.length ? ` (${tags.join(", ")})` : ""}</option>`;
+    return `<option value="${x.P}"${x.single ? ' data-single="1"' : ""}>${R.S}S${x.P}P — ${fmt(x.P*R.ah)} Ah${tags.length ? ` (${tags.join(", ")})` : ""}</option>`;
   }).join("");
   // kutu, hücre ya da seri sayısı değişince yine önce önerilen plana dön; aynı ölçülerde kullanıcının seçtiği P (ör. tek kat) korunur
   const geoKey = [R.box.L, R.box.W, R.box.H, R.m, R.off.L, R.off.W, R.off.H, R.d, R.len, R.gap, R.lgap, R.S].join("|");
@@ -3405,7 +3405,10 @@ function render(){
   $("phint").innerHTML = pHint(R, {maxAny, maxClean, maxSquare, maxSingle});
 
   const plans = plansFor(R, grids, pWant);
-  if (!plans.find(p => p.id === selectedPlanId)) selectedPlanId = (tekPlan && pWant === maxSingle && (preferTek || wantTek) && plans.includes(tekPlan) ? tekPlan : plans[0]).id;
+  // tek kat istendiyse (kart ya da “(tek kat)” etiketli P): o P'nin jig'e uygun tek katlı planı
+  const tekOf = () => plans.find(p => p.Lu === 1 && jigTier(p) === 0) || plans.find(p => p.Lu === 1);
+  if (!plans.find(p => p.id === selectedPlanId)) selectedPlanId = (tekPlan && pWant === maxSingle && (preferTek || wantTek) && plans.includes(tekPlan) ? tekPlan
+    : (wantTek && tekOf()) || plans[0]).id;
   wantTek = false;
   const sel = plans.find(p => p.id === selectedPlanId);
   const best = plans[0];
@@ -4575,7 +4578,18 @@ const MAN = (() => {
   }
   function exportState(){ return JSON.parse(JSON.stringify(st)); }
   function importState(v){ if (v && typeof v === "object"){ Object.assign(st, JSON.parse(JSON.stringify(v))); upCell(); persist(); if (pageShown("elle")) refresh(); } }
-  return {bind, refresh, onShow: refresh, exportState, importState};
+  // açılışta tasarım boşsa hücre yönü seçili planınkiyle başlar (3D'de görülen dizilim burada da kurulabilsin)
+  function onShow(){
+    const n = Object.values(design()).reduce((s, l) => s + Object.keys(l || {}).length, 0);
+    const pl = lastDetail && lastDetail[1];
+    if (!n && pl && pl.grid && !pl.manual && pl.grid.o.key !== st.oKey){
+      st.oKey = pl.grid.o.key; st.L = 0; persist(); refresh();
+      flash(`Hücre yönü seçili planla aynı yapıldı: <b>${escH(pl.grid.o.name)}</b>. Planı hazır almak için “Seçili plandan başlat”a dokunun.`);
+      return;
+    }
+    refresh();
+  }
+  return {bind, refresh, onShow, exportState, importState};
 })();
 
 /* ---------- AR: paketi telefon kamerasında gerçek boyutta göster ---------- */
@@ -5627,7 +5641,8 @@ $("unit").onchange = () => {
 };
 // P değişince listenin ilk (o P için en uygun) planı seçilsin.
 // Genel dinleyicilerden ÖNCE kayıtlı olmalı: "change" ile hemen çizilirken seçim sıfırlanmış olsun.
-$("psel").addEventListener("change", () => { selectedPlanId = null; });
+// “(tek kat)” yazan P seçilirse o P'nin tek katlı planı gelsin (etiket ile 3D aynı olsun)
+$("psel").addEventListener("change", () => { selectedPlanId = null; const o = $("psel").selectedOptions[0]; wantTek = !!(o && o.dataset.single === "1"); });
 document.querySelectorAll("input,select").forEach(el => { if (el.id !== "unit" && el.id !== "preset" && !el.closest("#v3d-block") && !el.closest("#calc-block") && !el.closest("#sim-block") && !el.closest("#proj") && !el.closest("#man-block") && !el.closest("#tm-block") && !el.id.startsWith("cp-")){ el.addEventListener("input", scheduleRender); el.addEventListener("change", renderNow); } });
 V3.bindUI();
 PROJ.bind();

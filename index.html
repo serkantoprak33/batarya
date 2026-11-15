@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="tr">
 <head>
-<meta name="app-ver" content="b9a56061fb">
+<meta name="app-ver" content="9f5b29f593">
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#07080c">
@@ -986,6 +986,7 @@ option,optgroup{background-color:var(--surface);color:var(--ink)}
         <label class="chip" for="t_show"><input type="checkbox" id="t_show"><span>Vitrin (döndür)</span></label>
         <button type="button" class="btn shot ar" id="t_ar"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M10 2.5l6.5 3.7v7.6L10 17.5l-6.5-3.7V6.2z"/><path d="M3.5 6.2L10 10l6.5-3.8M10 10v7.5"/></svg>AR'da gör</button>
         <button type="button" class="btn shot" id="t_shot"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M3 6.5h3l1.5-2h5l1.5 2h3v9H3z"/><circle cx="10" cy="11" r="3"/></svg>Görsel kaydet</button>
+        <button type="button" class="btn shot" id="t_video"><svg viewBox="0 0 20 20" aria-hidden="true"><rect x="2.5" y="5" width="11" height="10" rx="2"/><path d="M13.5 9l4-2.5v7l-4-2.5z"/></svg>Video kaydet</button>
         <label class="field inline" for="t_quality"><span class="lbl">Kalite</span>
           <select id="t_quality" class="mini"><option value="auto" selected>Otomatik</option><option value="high">Yüksek</option><option value="fast">Hızlı</option></select></label>
       </div>
@@ -1429,11 +1430,12 @@ const V3 = (() => {
     if (fxWanted()) setupFX(); else dropFX();
     resize();
   }
-  function resize(){ if (!renderer || !camera) return;
+  function resize(){ if (!renderer || !camera || recording) return;   // video kaydı sürerken çizim boyu sabit kalır
     if (fx){ const w = host.clientWidth || 320, h = host.clientHeight || 320, pr = renderer.getPixelRatio(); fx.comp.setPixelRatio(pr); fx.comp.setSize(w, h); fx.fxaa.uniforms.resolution.value.set(1 / (w * pr), 1 / (h * pr)); } const w = host.clientWidth || 320, h = host.clientHeight || 320; renderer.setSize(w, h, false); camera.aspect = w / h; camera.updateProjectionMatrix(); needs = true; }
 
   function tick(now){
-    const dt = Math.min(0.05, Math.max(0, (now - (lastT || now)) / 1000)); lastT = now;
+    // video kaydında bilgisayar yavaşlasa da tur gerçek sürede ilerlesin (video uzayıp ağır çekime dönmesin)
+    const dt = Math.min(recording ? 1 : 0.05, Math.max(0, (now - (lastT || now)) / 1000)); lastT = now;
     anim = false;
     if (controls) controls.autoRotate = st.show && mode !== "sim" && !fly;
     if (controls && controls.autoRotate) anim = true;   // vitrin modu: paket yavaşça döner
@@ -2661,6 +2663,7 @@ const V3 = (() => {
     // görsel kaydet: yalnız kurulan uygulamada (Claude içindeki görüntüleyici dosya indirmeye izin vermez)
     const tb = $$("t_tour"); if (tb) tb.addEventListener("click", () => { if (tour) stopTour(); else startTour(); });
     const shot = $$("t_shot"); if (shot){ shot.hidden = !window.BATARYA_APP; shot.addEventListener("click", () => snapshot(shot)); }
+    const vid = $$("t_video"); if (vid){ vid.hidden = !window.BATARYA_APP || !window.MediaRecorder; vid.addEventListener("click", () => recordVideo(vid)); }
     const hb0 = $$("heat-bar"); if (hb0) hb0.hidden = !st.heat;
     ["h_amb", "h_box"].forEach(id => {
       const el = $$(id); if (!el) return;
@@ -2690,6 +2693,175 @@ const V3 = (() => {
     $$("sim-cam").addEventListener("change", e => { sim.autoCam = e.target.checked; });
   }
   // ---- görsel kaydet: yüksek çözünürlüklü, logolu ve bilgili paket görseli (müşteriye gönderilebilir) ----
+  // ---- müşteriye video: sinematik tanıtım turu Full HD kaydedilir; KADRO logosu, paket bilgisi ve kapanış kartıyla ----
+  let recording = false;
+  async function recordVideo(btn){
+    if (recording || !ok || !cur || !A || mode === "sim" || !visible()) return;
+    const cv0 = renderer.domElement;
+    if (!cv0.captureStream){ btn.lastChild.textContent = "Bu cihaz desteklemiyor"; setTimeout(() => btn.lastChild.textContent = "Video kaydet", 2500); return; }
+    recording = true;
+    const label0 = btn.lastChild.textContent; btn.disabled = true;
+    const {R, pl} = cur, W = isMobile ? 1280 : 1920, H = Math.round(W * 9 / 16);
+    // görüntü kalitesi: çizim kayıt boyunda yapılır (ekrandaki küçük tuval büyütülmez)
+    const pr = renderer.getPixelRatio(), sz = renderer.getSize(new THREE.Vector2()), asp = camera.aspect, hadFx = !!fx;
+    if (hadFx) dropFX();
+    renderer.setPixelRatio(1); renderer.setSize(W, H, false); camera.aspect = W / H; camera.updateProjectionMatrix(); needs = true;
+    const out = document.createElement("canvas"); out.width = W; out.height = H;
+    const g = out.getContext("2d");
+    let logo = null;
+    await new Promise(res => { const im = new Image(); im.onload = () => { logo = im; res(); }; im.onerror = res; im.src = "simgeler/simge-192.png"; });
+    const ah = pl.P * R.ah, v = R.S * R.cv, kwh = v * ah / 1000;
+    const spec = `${R.S}S${pl.P}P · ${fmt(v, 1)} V · ${fmt(ah)} Ah · ${fmt(kwh, 2)} kWh`;
+    const u = W / 100, band = Math.round(H * 0.11);
+    const font = (w, s, f) => `${w} ${s}px ${f}`;
+    const disp = '"Barlow Condensed","Arial Narrow",Arial,sans-serif', sans = '"IBM Plex Sans",Arial,sans-serif', mono = '"IBM Plex Mono",monospace';
+    // zaman makinesi bölümü: bu paket şu anki senaryoyla ne kadar çalışır (tur bittikten sonra, kapanıştan önce)
+    const tmr = (typeof TM !== "undefined" && TM && TM.simNow) ? TM.simNow(R, pl) : null, TMD = 9;
+    const fmtT = s => { s = Math.max(0, Math.round(s)); const h = Math.floor(s / 3600), m = Math.floor(s % 3600 / 60), x = s % 60; return (h ? h + ":" + String(m).padStart(2, "0") : String(m)) + ":" + String(x).padStart(2, "0"); };
+    let tmAv = null;
+    if (tmr){
+      // dur-kalkta gerilim dalgalı: bir sürüş döngüsü boyunca ortalama çizilir
+      const fr = tmr.frames, w = tmr.drive && tmr.prof ? Math.max(1, Math.round(tmr.prof.per / tmr.dt)) : 0;
+      tmAv = fr.map((f, i) => { if (!w || !i) return f.V; let s = 0, c = 0; for (let j = Math.max(1, i - w); j <= Math.min(fr.length - 1, i + w); j++){ s += fr[j].V; c++; } return s / c; });
+    }
+    const tmNote = tmr ? (tmr.nDs ? "Not: Hücre datasheet değerleriyle (girilmeyenler tipik) hesaplanmıştır; gerçek kullanımda süre, menzil ve sıcaklık farklılık gösterebilir."
+      : "Not: Evrensel (tipik) hücre datasheet değerleri kullanılmıştır; gerçek kullanımda süre, menzil ve sıcaklık farklılık gösterebilir.") : "";
+    const drawTM = tt => {
+      const fr = tmr.frames, n = fr.length, P = tmr.P, k = Math.min(1, tt / 0.5);
+      g.fillStyle = `rgba(7,8,12,${0.9 * k})`; g.fillRect(0, 0, W, H - band);
+      g.globalAlpha = k; g.textBaseline = "middle"; g.textAlign = "left";
+      const p = Math.min(1, Math.max(0, (tt - 0.7) / (TMD - 2.4))), fi = Math.round(p * (n - 1)), f = fr[fi], tEnd = fr[n - 1].t;
+      const x0 = u * 5, x1 = W - u * 5, y0 = H * 0.17;
+      g.fillStyle = "#ff8f1f"; g.font = font(600, u * 1.35, mono); g.fillText(`ZAMAN MAKİNESİ · ${tmr.scnName.toLocaleUpperCase("tr")} · ORTAM ${fmt(P.amb, 0)} °C`, x0, y0);
+      g.fillStyle = "#ffffff"; g.font = font(800, u * 3.4, disp); g.fillText("BU PAKET NE KADAR ÇALIŞIR?", x0, y0 + u * 3.4);
+      // canlı değerler (solda)
+      const ry = y0 + u * 8;
+      const km = tmr.drive ? f.E / (P.whkm * tmr.pm) : null;
+      [["SÜRE", fmtT(f.t)], km != null ? ["YOL", `${fmt(km, 0)} km`] : ["ÇEKİLEN", `${fmt(f.Q, 1)} Ah`], ["ŞARJ", `%${fmt(Math.max(0, Math.min(1, f.soc)) * 100, 0)}`], ["EN SICAK HÜCRE", `${fmt(f.Tmax, 1)} °C`]].forEach(([a, b], i) => {
+        g.fillStyle = "#9ba4b8"; g.font = font(500, u * 1.1, mono); g.fillText(a, x0, ry + i * u * 5.6);
+        g.fillStyle = i === 3 ? "#ff8f1f" : "#ffffff"; g.font = font(700, u * 3, disp); g.fillText(b, x0, ry + i * u * 5.6 + u * 2.5);
+      });
+      // grafik (sağda): üstte gerilim, altta en sıcak hücre
+      const cx0 = x0 + u * 19, cx1 = x1, cy0 = y0 + u * 6.5, cy1 = H - band - u * 9.5, ch = cy1 - cy0;
+      g.fillStyle = "rgba(15,17,26,.96)"; g.fillRect(cx0, cy0, cx1 - cx0, ch);
+      g.strokeStyle = "rgba(61,107,255,.5)"; g.lineWidth = 2; g.strokeRect(cx0, cy0, cx1 - cx0, ch);
+      const px = t => cx0 + u * 1.5 + (cx1 - cx0 - u * 3) * t / tEnd;
+      const vTop = cy0 + u * 2.6, vH = ch * 0.5, tTop = vTop + vH + u * 2.4, tH = cy1 - u * 1.2 - tTop;
+      let v0 = tmr.Vcut, v1 = -Infinity; tmAv.forEach(v => { v1 = Math.max(v1, v); v0 = Math.min(v0, v); }); const vp = (v1 - v0) * 0.08 + 0.5; v0 -= vp; v1 += vp;
+      const T0 = P.amb - 1, T1 = Math.max(P.amb + 6, tmr.sum.Tmax + 2, tmr.sum.Tmax > P.cd.tmax - 15 ? P.cd.tmax + 3 : -Infinity);
+      const yV = v => vTop + vH * (1 - (v - v0) / (v1 - v0)), yT = T => tTop + tH * (1 - (T - T0) / (T1 - T0));
+      g.font = font(600, u * 1.05, mono);
+      g.fillStyle = "#7fa0ff"; g.fillText("GERİLİM (V)", cx0 + u * 1.5, cy0 + u * 1.3);
+      g.fillStyle = "#ff8f1f"; g.fillText("EN SICAK HÜCRE (°C)", cx0 + u * 1.5, tTop - u * 1.2);
+      g.setLineDash([u * 0.6, u * 0.5]); g.strokeStyle = "#ff6a55"; g.lineWidth = 2;
+      g.beginPath(); g.moveTo(px(0), yV(tmr.Vcut)); g.lineTo(px(tEnd), yV(tmr.Vcut)); g.stroke(); g.setLineDash([]);
+      g.fillStyle = "#ff6a55"; g.textAlign = "right"; g.fillText(`BMS kesme ≈ ${fmt(tmr.Vcut, 1)} V`, cx1 - u * 1.5, yV(tmr.Vcut) - u * 0.9); g.textAlign = "left";
+      const line = (fy, col) => { g.strokeStyle = col; g.lineWidth = u * 0.32; g.lineJoin = "round"; g.beginPath(); const st = Math.max(1, Math.ceil(n / 600)); for (let i = 0; i <= fi; i += st) (i ? g.lineTo : g.moveTo).call(g, px(fr[i].t), fy(i)); g.lineTo(px(f.t), fy(fi)); g.stroke(); };
+      line(i => yV(tmAv[i]), "#3d6bff"); line(i => yT(fr[i].Tmax), "#ff8f1f");
+      g.strokeStyle = "rgba(255,255,255,.8)"; g.lineWidth = 2; g.beginPath(); g.moveTo(px(f.t), cy0 + u * 0.6); g.lineTo(px(f.t), cy1 - u * 0.6); g.stroke();
+      // oynatma çubuğu (uygulamadaki gibi)
+      const by = H - band - u * 5.6, bx0 = x0 + u * 3.2, bx1 = x1 - u * 15;
+      g.fillStyle = "#ff8f1f"; g.beginPath(); g.moveTo(x0, by - u * 1.1); g.lineTo(x0 + u * 1.9, by); g.lineTo(x0, by + u * 1.1); g.closePath(); g.fill();
+      g.fillStyle = "rgba(255,255,255,.16)"; g.fillRect(bx0, by - u * 0.25, bx1 - bx0, u * 0.5);
+      g.fillStyle = "#ff8f1f"; g.fillRect(bx0, by - u * 0.25, (bx1 - bx0) * p, u * 0.5);
+      g.beginPath(); g.arc(bx0 + (bx1 - bx0) * p, by, u * 0.75, 0, Math.PI * 2); g.fill();
+      g.fillStyle = "#ffffff"; g.font = font(600, u * 1.4, mono); g.textAlign = "right"; g.fillText(`${fmtT(f.t)} / ${fmtT(tEnd)}`, x1, by); g.textAlign = "left";
+      // son: BMS kesti
+      if (p >= 1 && tmr.end && tmr.end.why !== "time"){
+        g.fillStyle = "#ff6a55"; const tx = tmr.end.why === "cut" ? "BMS KESTİ" : "PAKET BOŞALDI";
+        g.font = font(700, u * 1.5, mono); const tw = g.measureText(tx).width; g.fillRect(cx1 - tw - u * 3, cy1 + u * 0.8, tw + u * 2, u * 2.6);
+        g.fillStyle = "#170303"; g.fillText(tx, cx1 - tw - u * 2, cy1 + u * 2.1);
+      }
+      g.fillStyle = "#9ba4b8"; g.font = font(400, u * 1.05, sans); g.fillText(tmNote, x0, H - band - u * 2.2);
+      g.globalAlpha = 1;
+      brand();   // logo karartmanın üstünde kalsın
+    };
+    const mimes = ["video/mp4;codecs=avc1.640028", "video/mp4", "video/webm;codecs=vp9", "video/webm"];
+    const mime = mimes.find(m => MediaRecorder.isTypeSupported && MediaRecorder.isTypeSupported(m)) || "";
+    const stream = out.captureStream(30);
+    const recd = new MediaRecorder(stream, mime ? {mimeType: mime, videoBitsPerSecond: isMobile ? 6e6 : 12e6} : {videoBitsPerSecond: 8e6});
+    const chunks = []; recd.ondataavailable = e => { if (e.data && e.data.size) chunks.push(e.data); };
+    const stopped = new Promise(res => recd.onstop = res);
+    // kare kare: 3D görüntü + logo + alt bilgi şeridi + sahne yazısı; sonunda kapanış kartı
+    const END = 2.6; let t0 = 0, endAt = 0, raf = 0, tourEnd = 0;
+    // üst sol: logo ve marka
+    function brand(){
+      const ls = u * 5.2;
+      if (logo) g.drawImage(logo, u * 2.4, u * 2.2, ls, ls);
+      g.textBaseline = "middle"; g.textAlign = "left"; g.fillStyle = "#ffffff"; g.font = font(700, u * 2.6, disp);
+      g.fillText("KADRO TEKNOLOJİ", u * 2.4 + ls + u * 1.2, u * 2.2 + ls * 0.38);
+      g.fillStyle = "#ff8f1f"; g.font = font(500, u * 1.25, mono);
+      g.fillText("Kadro Tasarım · batarya paketi", u * 2.4 + ls + u * 1.2, u * 2.2 + ls * 0.8);
+    }
+    const draw = now => {
+      if (!t0) t0 = now;
+      g.fillStyle = "#07080c"; g.fillRect(0, 0, W, H);
+      g.drawImage(cv0, 0, 0, W, H);
+      brand();
+      // sahne yazısı (tanıtım turu)
+      if (tour && tour.scenes[tour.i]){
+        const cap = tour.scenes[tour.i].cap.toLocaleUpperCase("tr");
+        g.font = font(700, u * 2.2, disp); const tw = g.measureText(cap).width;
+        g.fillStyle = "rgba(7,8,12,.72)"; g.fillRect(u * 2.4, H - band - u * 6.2, tw + u * 2.4, u * 3.6);
+        g.fillStyle = "#3d6bff"; g.fillRect(u * 2.4, H - band - u * 6.2, u * 0.35, u * 3.6);
+        g.fillStyle = "#ffffff"; g.fillText(cap, u * 3.6, H - band - u * 4.4);
+      }
+      // alt şerit: paket bilgisi
+      g.fillStyle = "rgba(11,14,16,.92)"; g.fillRect(0, H - band, W, band);
+      g.fillStyle = "#ff8a1e"; g.fillRect(0, H - band, W, Math.max(3, band * 0.05));
+      g.fillStyle = "#ffffff"; g.font = font(700, band * 0.4, disp); g.textAlign = "left";
+      g.fillText(spec, u * 2.4, H - band / 2);
+      g.textAlign = "right"; g.fillStyle = "#a9b4bd"; g.font = font(500, band * 0.24, sans);
+      g.fillText(`${pl.used} hücre · ${new Date().toLocaleDateString("tr-TR")}`, W - u * 2.4, H - band / 2);
+      g.textAlign = "left";
+      // tur bitti: önce zaman makinesi, sonra kapanış kartı
+      if (!tour && !tourEnd) tourEnd = now;
+      const tmT = tourEnd ? (now - tourEnd) / 1000 : 0;
+      if (!tour && tmr && tmT < TMD) drawTM(tmT);
+      else if (!tour){
+        if (!endAt) endAt = now;
+        const k = Math.min(1, (now - endAt) / 600);
+        g.fillStyle = `rgba(7,8,12,${0.82 * k})`; g.fillRect(0, 0, W, H);
+        g.globalAlpha = k; g.textAlign = "center";
+        const bs = u * 11; if (logo) g.drawImage(logo, W / 2 - bs / 2, H * 0.22, bs, bs);
+        g.fillStyle = "#ffffff"; g.font = font(800, u * 5, disp); g.fillText("KADRO TEKNOLOJİ", W / 2, H * 0.22 + bs + u * 4);
+        g.fillStyle = "#ff8f1f"; g.font = font(700, u * 3, disp); g.fillText(spec, W / 2, H * 0.22 + bs + u * 8.6);
+        g.globalAlpha = 1; g.textAlign = "left";
+        if (now - endAt > END * 1000){ recd.stop(); return; }
+      }
+      btn.lastChild.textContent = tour ? `Kaydediliyor… ${Math.min(80, Math.round(((tour.i + 0.5) / tour.scenes.length) * 80))}%` : (tmr && tmT < TMD) ? `Kaydediliyor… ${80 + Math.round(tmT / TMD * 18)}%` : "Bitiriliyor…";
+      needs = true;
+      raf = requestAnimationFrame(draw);
+    };
+    try {
+      recd.start(500);
+      startTour();
+      raf = requestAnimationFrame(draw);
+      await stopped;
+    } catch (e){ try { recd.stop(); } catch (err) {} }
+    cancelAnimationFrame(raf); stream.getTracks().forEach(t => t.stop());
+    renderer.setPixelRatio(pr); renderer.setSize(sz.x, sz.y, false); camera.aspect = asp; camera.updateProjectionMatrix();
+    if (hadFx) applyQuality(); else resize();
+    needs = true; recording = false;
+    let msg = "Kaydedildi ✓";
+    try {
+      const type = (mime || "video/webm").split(";")[0], ext = type.includes("mp4") ? "mp4" : "webm";
+      const blob = new Blob(chunks, {type});
+      if (!blob.size) throw new Error("boş");
+      const fname = `kadro-paket-${R.S}S${pl.P}P-${fmt(ah, 0)}Ah.${ext}`;
+      let done = false;
+      try {
+        const file = new File([blob], fname, {type});
+        if (navigator.canShare && navigator.canShare({files: [file]})){ await navigator.share({files: [file], title: fname, text: `KADRO TEKNOLOJİ · ${spec}`}); done = true; }
+      } catch (e){ if (e && e.name === "AbortError") done = true; }
+      if (!done){
+        const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = fname;
+        document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 8000);
+      }
+    } catch (e){ msg = "Kaydedilemedi"; }
+    btn.lastChild.textContent = msg;
+    setTimeout(() => { btn.lastChild.textContent = label0; btn.disabled = false; }, 2000);
+  }
   async function snapshot(btn){
     if (!ok || !cur || !visible()) return;
     const old = btn.lastChild.textContent; btn.disabled = true; btn.lastChild.textContent = "Hazırlanıyor…";
@@ -5618,7 +5790,16 @@ var TM = (() => {
     window.addEventListener("resize", () => { clearTimeout(rz); rz = setTimeout(fit, 150); });
     ui();
   }
-  return {bind, update, onShow};
+  // videoya: verilen plan için şu anki zaman makinesi ayarlarıyla (senaryo, ortam, kutu) tek hesap
+  function simNow(R, pl){
+    try {
+      const P = params(R, pl.P), r = sim(R, pl, P);
+      if (!r) return null;
+      r.scnName = SCN[P.scn].name; r.nDs = P.cd.nDs;
+      return r;
+    } catch (e){ return null; }
+  }
+  return {bind, update, onShow, simNow};
 })();
 
 /* ---------- Olaylar ---------- */

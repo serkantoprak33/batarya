@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="tr">
 <head>
-<meta name="app-ver" content="86d990f802">
+<meta name="app-ver" content="5da6379069">
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#07080c">
@@ -2343,7 +2343,7 @@ const V3 = (() => {
     const topL = solo === null ? pl.Lu - 1 : solo, mx = (minX + maxX) / 2, my = (minY + maxY) / 2;
     const midCell = allCells.reduce((b, q) => (q.L === topL && (!b || Math.hypot(q.c.x - mx, q.c.y - my) < Math.hypot(b.c.x - mx, b.c.y - my))) ? q : b, null);
     const focus = {face: pos(mx, my, faceC(topL, "top", T)), cell: midCell ? pos(midCell.c.x, midCell.c.y, faceC(topL, "top", T)) : pos(mx, my, faceC(topL, "top", T)), bms: bmsPad ? bmsPad.clone() : null};
-    A = Object.assign(rec, {focus, steps, sid, bodies, caps, nips, rings, ins, holders, plateSets, q: qAxis, drop: up.clone().multiplyScalar(R.len * 1.4 + U), plateDrop: R.len * 0.6, axis});
+    A = Object.assign(rec, {focus, steps, sid, bodies, caps, nips, rings, ins, holders, plateSets, q: qAxis, drop: up.clone().multiplyScalar(R.len * 1.4 + U), plateDrop: R.len * 0.6, axis, pmin: Object.assign({}, pmin), pmax: Object.assign({}, pmax)});
     if (sim.i > steps.length - 1) sim.i = steps.length - 1;
 
     // araç çubuğu: kesit ve tek kat seçimi
@@ -3026,7 +3026,9 @@ const V3 = (() => {
   }
   function setPlan(R, pl){ if (cmpOn){ cmpSaved = {R, pl}; return; } cur = {R, pl}; dirty = true; }
   const isManual = () => !!(cur && cur.pl && cur.pl.manual);
-  return {show, clear, bindUI, setView, setMode, onShow, setPlan, isManual, renderImage, exportGLB, showCompare, stopCompare: endCompare};
+  // otomatik kontrol için salt-okunur durum (uygulamayı değiştirmez)
+  const stats = () => (A && cur) ? {pmin: A.pmin, pmax: A.pmax, box: Object.assign({}, cur.R.box), m: cur.R.m || 0, cells: A.cells.length, free: !!cur.R.free, wrap: st.wrap, recording} : null;
+  return {show, clear, bindUI, setView, setMode, onShow, setPlan, isManual, renderImage, exportGLB, showCompare, stopCompare: endCompare, stats};
 })();
 </script>
 <script>

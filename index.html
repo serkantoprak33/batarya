@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="tr">
 <head>
-<meta name="app-ver" content="37b73cbce5">
+<meta name="app-ver" content="7daec17cad">
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#07080c">
@@ -1363,6 +1363,7 @@ const V3 = (() => {
     const loop = now => {
       requestAnimationFrame(loop);
       if (document.hidden || !visible()) return;
+      if (recOffline) return;   // video kare kare üretilirken çizimi o yapar
       now = now || performance.now();
       tick(now);
       if (controls.update()) needs = true;
@@ -2693,15 +2694,20 @@ const V3 = (() => {
     $$("sim-cam").addEventListener("change", e => { sim.autoCam = e.target.checked; });
   }
   // ---- görsel kaydet: yüksek çözünürlüklü, logolu ve bilgili paket görseli (müşteriye gönderilebilir) ----
-  // ---- müşteriye video: paket önden / yandan / üstten, ölçüleriyle; en sonda bitmiş paket. KADRO logolu, Full HD ----
-  let recording = false;
+  // ---- müşteriye video: paket önden / yandan / üstten, ölçüleriyle; kutu, kapak, bitmiş paket. KADRO logolu, Full HD ----
+  // Kare kare üretilir (WebCodecs + MP4): bilgisayar yavaş da olsa video saniyede 30 kare akıcı çıkar.
+  // Tarayıcı desteklemiyorsa canlı kayda (MediaRecorder) düşülür.
+  let recording = false, recOffline = false;
   async function recordVideo(btn){
     if (recording || !ok || !cur || !A || mode === "sim" || !visible()) return;
     const cv0 = renderer.domElement;
-    if (!cv0.captureStream || !window.MediaRecorder){ btn.lastChild.textContent = "Bu cihaz desteklemiyor"; setTimeout(() => btn.lastChild.textContent = "Video kaydet", 2500); return; }
+    const canOffline = !!(window.VideoEncoder && window.VideoFrame);
+    if (!canOffline && (!cv0.captureStream || !window.MediaRecorder)){ btn.lastChild.textContent = "Bu cihaz desteklemiyor"; setTimeout(() => btn.lastChild.textContent = "Video kaydet", 2500); return; }
     recording = true; stopTour();
     const label0 = btn.lastChild.textContent; btn.disabled = true;
-    const {R, pl} = cur, W = isMobile ? 1280 : 1920, H = Math.round(W * 9 / 16);
+    const say = t => { btn.lastChild.textContent = t; };
+    say("Hazırlanıyor…");
+    const {R, pl} = cur, W = isMobile ? 1280 : 1920, H = Math.round(W * 9 / 16), FPS = 30;
     // görünüm: kutu, duvar, etiket ve BMS gizli; yalnız paket ve ölçüleri (sonra eski hâline döner)
     const keep = {box: st.box, walls: st.walls, lid: st.lid, labels: st.labels, dims: st.dims, bms: st.bms, wrap: st.wrap, show: st.show, explode: st.explode, cut: st.cut, solo: st.solo, heat: st.heat, flow: st.flow, taps: st.taps, harness: st.harness, measure: st.measure};
     Object.assign(st, {box: false, walls: false, lid: false, labels: false, dims: false, bms: false, wrap: false, show: false, explode: 0, cut: false, solo: false, heat: false, flow: false, taps: false, harness: false, vdims: true});
@@ -2712,11 +2718,11 @@ const V3 = (() => {
     if (hadFx) dropFX();
     renderer.setPixelRatio(1); renderer.setSize(W, H, false); camera.aspect = W / H; camera.updateProjectionMatrix();
     build();
-    // kamera paketin kendisine göre (kutuya göre değil) yaklaşsın; ölçü etiketleri kadraja girsin
+    // kamera paketin kendisine göre yaklaşsın; ölçü etiketleri kadraja ve bilgi şeridinin üstüne girsin
     const bb = new THREE.Box3(); A.cells.forEach(it => bb.expandByPoint(it.body));
     bb.expandByScalar(Math.max(R.len, R.d) * 0.6);
     const ctr = bb.getCenter(new THREE.Vector3()), pd = bb.getSize(new THREE.Vector3()).length();
-    ctr.y -= bb.getSize(new THREE.Vector3()).y * 0.18;   // paket kadrajda biraz yukarıda: alttaki ölçüler bilgi şeridinin üstünde kalsın
+    ctr.y -= bb.getSize(new THREE.Vector3()).y * 0.18;
     const B = R.box, boxD = Math.hypot(B.L, B.W, B.H), kk = Math.max(0.25, Math.min(1.2, pd / boxD * 0.98));
     const scenes = [
       {cap: "3D görünüm", view: "iso", dur: 3.4},
@@ -2725,10 +2731,10 @@ const V3 = (() => {
       {cap: "Üstten · uzunluk × genişlik", view: "top", dur: 3.2},
       // bitmiş pakete aşamalı geçiş: kutu duvarları belirir, kapak kapanır, sonra yumuşak geçişle bitmiş paket
       ...(R.free ? [] : [
-        {cap: "Kutuya yerleşir", view: "iso", dur: 2.8, walls: true, fade: 0.9, box: true},
-        {cap: "Kapak kapanır", view: "iso", dur: 2.8, walls: true, lid: true, box: true},
+        {cap: "Kutuya yerleşir", view: "iso", dur: 3.0, walls: true, fade: 1.0, box: true},
+        {cap: "Kapak kapanır", view: "iso", dur: 3.0, walls: true, lid: true, box: true},
       ]),
-      {cap: "Bitmiş paket", view: "iso", dur: 4.6, wrap: true, fade: 1.2},
+      {cap: "Bitmiş paket", view: "iso", dur: 4.8, wrap: true, fade: 1.3},
     ];
     const total = scenes.reduce((s, x) => s + x.dur, 0);
     const out = document.createElement("canvas"); out.width = W; out.height = H;
@@ -2740,12 +2746,6 @@ const V3 = (() => {
     const u = W / 100, band = Math.round(H * 0.11);
     const font = (w, s, f) => `${w} ${s}px ${f}`;
     const disp = '"Barlow Condensed","Arial Narrow",Arial,sans-serif', sans = '"IBM Plex Sans",Arial,sans-serif', mono = '"IBM Plex Mono",monospace';
-    const mimes = ["video/mp4;codecs=avc1.640028", "video/mp4", "video/webm;codecs=vp9", "video/webm"];
-    const mime = mimes.find(m => MediaRecorder.isTypeSupported && MediaRecorder.isTypeSupported(m)) || "";
-    const stream = out.captureStream(30);
-    const recd = new MediaRecorder(stream, mime ? {mimeType: mime, videoBitsPerSecond: isMobile ? 6e6 : 12e6} : {videoBitsPerSecond: 8e6});
-    const chunks = []; recd.ondataavailable = e => { if (e.data && e.data.size) chunks.push(e.data); };
-    const stopped = new Promise(res => recd.onstop = res);
     const brand = () => {
       const ls = u * 5.2;
       if (logo) g.drawImage(logo, u * 2.4, u * 2.2, ls, ls);
@@ -2761,38 +2761,31 @@ const V3 = (() => {
       g.fillStyle = "#3d6bff"; g.fillRect(kx - kw * 0.55, ky + u * 1.55, kw * 0.55, u * 0.32);
       g.textAlign = "left";
     };
-    let t0 = 0, si = -1, raf = 0, clock = 0, lastNow = 0;
-    let fadeCv = null, fadeAt = 0, fadeDur = 0;
-    const goScene = i => {
+    // sahne yönetimi: t = videonun saniyesi
+    let si = -1, fadeCv = null, fadeAt = 0, fadeDur = 0;
+    const goScene = (i, t) => {
       si = i; const sc = scenes[i];
       // yumuşak geçiş: son kare saklanır, yeni görüntünün üstünde yavaşça kaybolur
-      if (sc.fade && i > 0){ fadeCv = fadeCv || document.createElement("canvas"); fadeCv.width = W; fadeCv.height = H; fadeCv.getContext("2d").drawImage(cv0, 0, 0, W, H); fadeAt = performance.now(); fadeDur = sc.fade * 1000; }
+      if (sc.fade && i > 0){ fadeCv = fadeCv || document.createElement("canvas"); fadeCv.width = W; fadeCv.height = H; fadeCv.getContext("2d").drawImage(cv0, 0, 0, W, H); fadeAt = t; fadeDur = sc.fade; }
       const want = {wrap: !!sc.wrap, walls: !!sc.walls, lid: !!sc.lid};
       if (want.lid && !st.lid) lidAng = LID_OPEN;   // kapak açıktan kapanarak gelir
-      if (!want.lid && st.lid) lidAng = LID_OPEN;   // bitmiş pakete geçerken kapak yeniden açılmasın, hemen kalksın
+      if (!want.lid && st.lid) lidAng = LID_OPEN;   // bitmiş pakete geçerken kapak yeniden açılmasın
       if (want.wrap !== st.wrap || want.walls !== st.walls || want.lid !== st.lid){ Object.assign(st, want); build(); }
-      // kutulu sahnelerde kutunun tamamı kadraja girer; diğerlerinde kamera pakete yaklaşır
       if (sc.box) flyTo(dirFor(sc.view), 0.86, false, new THREE.Vector3(0, -B.H * 0.2, 0), 1.8);
-      else flyTo(dirFor(sc.view), kk, i === 0, ctr, sc.wrap ? 2.0 : 1.1);
+      else flyTo(dirFor(sc.view), kk, i === 0, ctr, sc.wrap ? 2.0 : 1.2);
     };
-    const draw = now => {
-      if (!t0){ t0 = now; lastNow = now; goScene(0); }
-      clock += Math.min(0.2, (now - lastNow) / 1000);   // yalnız uzun takılmada durur; yavaş bilgisayarda ağır çekime dönmez lastNow = now;
-      const t = clock;
-      let acc = 0, want = scenes.length - 1;
-      for (let i = 0; i < scenes.length; i++){ if (t < acc + scenes[i].dur){ want = i; break; } acc += scenes[i].dur; }
-      if (want !== si) goScene(want);
+    const sceneAt = t => { let acc = 0; for (let i = 0; i < scenes.length; i++){ if (t < acc + scenes[i].dur) return i; acc += scenes[i].dur; } return scenes.length - 1; };
+    // bir kare: 3D görüntü + geçiş + logo + sahne yazısı + bilgi şeridi
+    const compose = t => {
       g.fillStyle = "#07080c"; g.fillRect(0, 0, W, H);
       g.drawImage(cv0, 0, 0, W, H);
-      if (fadeCv){ const a = 1 - (now - fadeAt) / fadeDur; if (a > 0){ g.globalAlpha = a; g.drawImage(fadeCv, 0, 0); g.globalAlpha = 1; } else fadeCv = null; }
+      if (fadeCv){ const a = 1 - (t - fadeAt) / fadeDur; if (a > 0){ g.globalAlpha = a; g.drawImage(fadeCv, 0, 0); g.globalAlpha = 1; } else fadeCv = null; }
       brand();
-      // sahne yazısı
       const cap = scenes[si].cap.toLocaleUpperCase("tr");
       g.font = font(700, u * 2.2, disp); const tw = g.measureText(cap).width;
       g.fillStyle = "rgba(7,8,12,.72)"; g.fillRect(u * 2.4, H - band - u * 6.2, tw + u * 2.4, u * 3.6);
       g.fillStyle = "#3d6bff"; g.fillRect(u * 2.4, H - band - u * 6.2, u * 0.35, u * 3.6);
       g.fillStyle = "#ffffff"; g.textAlign = "left"; g.fillText(cap, u * 3.6, H - band - u * 4.4);
-      // alt şerit: paket bilgisi
       g.fillStyle = "rgba(11,14,16,.92)"; g.fillRect(0, H - band, W, band);
       g.fillStyle = "#ff8a1e"; g.fillRect(0, H - band, W, Math.max(3, band * 0.05));
       g.fillStyle = "#ffffff"; g.font = font(700, band * 0.4, disp);
@@ -2800,40 +2793,88 @@ const V3 = (() => {
       g.textAlign = "right"; g.fillStyle = "#a9b4bd"; g.font = font(500, band * 0.24, sans);
       g.fillText(`${pl.used} hücre · ${new Date().toLocaleDateString("tr-TR")}`, W - u * 2.4, H - band / 2);
       g.textAlign = "left";
-      btn.lastChild.textContent = `Kaydediliyor… ${Math.min(99, Math.round(t / total * 100))}%`;
-      needs = true;
-      if (t >= total){ recd.stop(); return; }
-      raf = requestAnimationFrame(draw);
     };
-    // ısınma: duvar, kapak ve kaplama ilk çizimde birkaç saniye takılabiliyor; kayıttan önce bir kez hazırlanır
+    // ısınma: duvar, kapak ve kaplama ilk çizimde takılabiliyor; önce bir kez hazırlanır
     try {
       [{walls: !R.free, lid: !R.free}, {wrap: true}].forEach(w => { Object.assign(st, {walls: false, lid: false, wrap: false}, w); lidAng = st.lid ? 0 : LID_OPEN; build(); renderer.compile(scene, camera); renderer.render(scene, camera); });
     } catch (e){}
     Object.assign(st, {walls: false, lid: false, wrap: false}); lidAng = LID_OPEN; build();
-    await new Promise(r => setTimeout(r, 150));
-    try {
-      recd.start(500);
-      raf = requestAnimationFrame(draw);
-      await stopped;
-    } catch (e){ try { recd.stop(); } catch (err) {} }
-    cancelAnimationFrame(raf); stream.getTracks().forEach(t => t.stop());
+    await new Promise(r => setTimeout(r, 60));
+
+    let blob = null, ext = "mp4";
+    // 1) kare kare (akıcı): her kare tam çizilir, MP4'e 30 kare/sn olarak yazılır
+    if (canOffline){
+      try {
+        if (!window.Mp4Muxer) await loadScript(window.BATARYA_APP ? "lib/mp4-muxer.js" : "https://cdn.jsdelivr.net/npm/mp4-muxer@5.2.2/build/mp4-muxer.js");
+        let codec = null;
+        for (const c of ["avc1.640028", "avc1.4d0028", "avc1.42003e", "avc1.42001f"]){
+          try { const s = await VideoEncoder.isConfigSupported({codec: c, width: W, height: H, bitrate: 12e6, framerate: FPS}); if (s && s.supported){ codec = c; break; } } catch (e){}
+        }
+        if (!codec || !window.Mp4Muxer) throw new Error("kodlayıcı yok");
+        const muxer = new Mp4Muxer.Muxer({target: new Mp4Muxer.ArrayBufferTarget(), video: {codec: "avc", width: W, height: H}, fastStart: "in-memory"});
+        let encErr = null;
+        const enc = new VideoEncoder({output: (chunk, meta) => muxer.addVideoChunk(chunk, meta), error: e => { encErr = e; }});
+        enc.configure({codec, width: W, height: H, bitrate: isMobile ? 8e6 : 14e6, framerate: FPS});
+        recOffline = true;   // ekrandaki döngü durur; kareleri bu döngü çizer
+        const N = Math.ceil(total * FPS), base = performance.now();
+        lastT = base;
+        for (let k = 0; k < N; k++){
+          const t = k / FPS, want = sceneAt(t);
+          if (want !== si) goScene(want, t);
+          tick(base + k * 1000 / FPS); controls.update();
+          renderer.render(scene, camera);
+          compose(t);
+          const frame = new VideoFrame(out, {timestamp: Math.round(k * 1e6 / FPS), duration: Math.round(1e6 / FPS)});
+          enc.encode(frame, {keyFrame: k % (FPS * 2) === 0}); frame.close();
+          if (encErr) throw encErr;
+          while (enc.encodeQueueSize > 4) await new Promise(r => setTimeout(r, 4));
+          if (k % 3 === 0){ say(`Video hazırlanıyor… ${Math.round(k / N * 100)}%`); await new Promise(r => setTimeout(r, 0)); }
+        }
+        await enc.flush(); enc.close();
+        muxer.finalize();
+        blob = new Blob([muxer.target.buffer], {type: "video/mp4"});
+      } catch (e){ blob = null; }
+      recOffline = false;
+    }
+    // 2) yedek: canlı kayıt (eski tarayıcılar)
+    if (!blob && cv0.captureStream && window.MediaRecorder){
+      si = -1; fadeCv = null;
+      const mimes = ["video/mp4;codecs=avc1.640028", "video/mp4", "video/webm;codecs=vp9", "video/webm"];
+      const mime = mimes.find(m => MediaRecorder.isTypeSupported && MediaRecorder.isTypeSupported(m)) || "";
+      const stream = out.captureStream(FPS);
+      const recd = new MediaRecorder(stream, mime ? {mimeType: mime, videoBitsPerSecond: isMobile ? 6e6 : 12e6} : {videoBitsPerSecond: 8e6});
+      const chunks = []; recd.ondataavailable = e => { if (e.data && e.data.size) chunks.push(e.data); };
+      const stopped = new Promise(res => recd.onstop = res);
+      let clock = 0, lastNow = 0, raf = 0;
+      const loop = now => {
+        if (!lastNow) lastNow = now;
+        clock += Math.min(0.2, (now - lastNow) / 1000); lastNow = now;
+        const want = sceneAt(clock); if (want !== si) goScene(want, clock);
+        compose(clock); needs = true;
+        say(`Kaydediliyor… ${Math.min(99, Math.round(clock / total * 100))}%`);
+        if (clock >= total){ recd.stop(); return; }
+        raf = requestAnimationFrame(loop);
+      };
+      try { recd.start(500); raf = requestAnimationFrame(loop); await stopped; } catch (e){ try { recd.stop(); } catch (err) {} }
+      cancelAnimationFrame(raf); stream.getTracks().forEach(t => t.stop());
+      const type = (mime || "video/webm").split(";")[0]; ext = type.includes("mp4") ? "mp4" : "webm";
+      blob = chunks.length ? new Blob(chunks, {type}) : null;
+    }
     // eski görünüm ve kamera
     delete st.vdims; Object.assign(st, keep); lidAng = keep.lid ? 0 : LID_OPEN;
     renderer.setPixelRatio(pr); renderer.setSize(sz.x, sz.y, false); camera.aspect = asp; camera.updateProjectionMatrix();
-    recording = false;
+    recording = false; lastT = 0;
     build(); fly = null; camera.position.copy(camP); controls.target.copy(camT); controls.update();
     if (keep.measure) setMeasure(true);
     if (hadFx) applyQuality(); else resize();
     needs = true;
     let msg = "Kaydedildi ✓";
     try {
-      const type = (mime || "video/webm").split(";")[0], ext = type.includes("mp4") ? "mp4" : "webm";
-      const blob = new Blob(chunks, {type});
-      if (!blob.size) throw new Error("boş");
+      if (!blob || !blob.size) throw new Error("boş");
       const fname = `kadro-paket-${R.S}S${pl.P}P-${fmt(ah, 0)}Ah.${ext}`;
       let done = false;
       try {
-        const file = new File([blob], fname, {type});
+        const file = new File([blob], fname, {type: blob.type});
         if (navigator.canShare && navigator.canShare({files: [file]})){ await navigator.share({files: [file], title: fname, text: `KADRO TEKNOLOJİ · ${spec}`}); done = true; }
       } catch (e){ if (e && e.name === "AbortError") done = true; }
       if (!done){
@@ -2841,8 +2882,8 @@ const V3 = (() => {
         document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 8000);
       }
     } catch (e){ msg = "Kaydedilemedi"; }
-    btn.lastChild.textContent = msg;
-    setTimeout(() => { btn.lastChild.textContent = label0; btn.disabled = false; }, 2000);
+    say(msg);
+    setTimeout(() => { say(label0); btn.disabled = false; }, 2000);
   }
   async function snapshot(btn){
     if (!ok || !cur || !visible()) return;

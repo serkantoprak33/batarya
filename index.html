@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="tr">
 <head>
-<meta name="app-ver" content="9f5b29f593">
+<meta name="app-ver" content="b2ae4c1924">
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#07080c">
@@ -2131,7 +2131,7 @@ const V3 = (() => {
     }
 
     // kutusuz: kutu çizilmez; paketin kendi uzunluk / genişlik / yükseklik ölçüleri oklu gösterilir
-    if (R.free && !isSim){
+    if ((R.free || st.vdims) && !isSim){   // kutusuz ya da müşteri videosu
       const V = THREE.Vector3, ink = new THREE.Color(cssv("--ink"));
       const lm = new THREE.LineBasicMaterial({color: ink, depthTest: false, transparent: true, opacity: 0.9});
       const cg = new THREE.ConeGeometry(U * 0.1, U * 0.3, 10), cm = new THREE.MeshBasicMaterial({color: ink, depthTest: false, transparent: true});
@@ -2140,7 +2140,7 @@ const V3 = (() => {
         const ls = new THREE.LineSegments(new THREE.BufferGeometry().setFromPoints([a, pa.clone().add(on), b, pb.clone().add(on), pa, pb]), lm); ls.renderOrder = 8; pack.add(ls);
         const d = pb.clone().sub(pa); if (d.length() < 1e-6) return; d.normalize();
         [[pa, d.clone().negate()], [pb, d]].forEach(([p, dir]) => { const cn = new THREE.Mesh(cg, cm); cn.position.copy(p).addScaledVector(dir, -U * 0.15); cn.quaternion.setFromUnitVectors(up, dir); cn.renderOrder = 8; pack.add(cn); });
-        const lb = label(text, U, "rgba(47,91,230,.95)", "#ffffff", 0.85); lb.position.copy(pa.clone().add(pb).multiplyScalar(0.5)); pack.add(lb);
+        const lb = label(text, U, "rgba(47,91,230,.95)", "#ffffff", st.vdims ? 1.35 : 0.85); lb.position.copy(pa.clone().add(pb).multiplyScalar(0.5)); pack.add(lb);   // videoda ölçüler iri okunsun
       };
       // izolasyon kağıdı + nikel dahil bitmiş ölçü (kutu yönü → dünya ekseni: L=x, H=y, W=z)
       const fp = finishPad(R, o.c);
@@ -2278,11 +2278,11 @@ const V3 = (() => {
     // ---- bitmiş paket: ısıyla daralan PVC ile sarılmış blok ve ön yüzde etiket ----
     if (st.wrap){
       // kutusuz: kaplama hücreye sıkı oturur, köşeler hücreleri kesmesin diye neredeyse keskin
-      const bv = R.free ? 0.4 : Math.min(6, Math.min(pmax.x - pmin.x, pmax.y - pmin.y, pmax.z - pmin.z) * 0.08), rc = R.free ? 1 : Math.min(10, Math.min(pmax.x - pmin.x, pmax.y - pmin.y) * 0.12);
+      const bv = (R.free || st.vdims) ? 0.4 : Math.min(6, Math.min(pmax.x - pmin.x, pmax.y - pmin.y, pmax.z - pmin.z) * 0.08), rc = (R.free || st.vdims) ? 1 : Math.min(10, Math.min(pmax.x - pmin.x, pmax.y - pmin.y) * 0.12);
       const pad = T + 1.8 + 0.42 * Math.max(bv, rc);
       // kutusuz: kaplama tam bitmiş ölçüde (izolasyon + nikel), ölçü oklarıyla aynı
       // (3D'de nikel görünür olsun diye kalın çizilir: kaplama onu örtecek kadar, en az T + 0,5 mm uzak durur)
-      const wf = R.free ? (fp0 => { const vk = {L: 0.5, W: 0.5, H: 0.5}; vk[o.c] = T + 0.5; return {L: Math.max(fp0.L, vk.L), W: Math.max(fp0.W, vk.W), H: Math.max(fp0.H, vk.H)}; })(finishPad(R, o.c)) : null;
+      const wf = (R.free || st.vdims) ? (fp0 => { const vk = {L: 0.5, W: 0.5, H: 0.5}; vk[o.c] = T + 0.5; return {L: Math.max(fp0.L, vk.L), W: Math.max(fp0.W, vk.W), H: Math.max(fp0.H, vk.H)}; })(finishPad(R, o.c)) : null;
       const sx = pmax.x - pmin.x + 2 * (wf ? wf.L : pad), sy = pmax.y - pmin.y + 2 * (wf ? wf.H : pad), sz = pmax.z - pmin.z + 2 * (wf ? wf.W : pad);
       const w2 = sx / 2 - bv, h2 = sy / 2 - bv, r2 = Math.min(rc, w2 * 0.9, h2 * 0.9);
       const sh = new THREE.Shape();
@@ -2693,19 +2693,39 @@ const V3 = (() => {
     $$("sim-cam").addEventListener("change", e => { sim.autoCam = e.target.checked; });
   }
   // ---- görsel kaydet: yüksek çözünürlüklü, logolu ve bilgili paket görseli (müşteriye gönderilebilir) ----
-  // ---- müşteriye video: sinematik tanıtım turu Full HD kaydedilir; KADRO logosu, paket bilgisi ve kapanış kartıyla ----
+  // ---- müşteriye video: paket önden / yandan / üstten, ölçüleriyle; en sonda bitmiş paket. KADRO logolu, Full HD ----
   let recording = false;
   async function recordVideo(btn){
     if (recording || !ok || !cur || !A || mode === "sim" || !visible()) return;
     const cv0 = renderer.domElement;
-    if (!cv0.captureStream){ btn.lastChild.textContent = "Bu cihaz desteklemiyor"; setTimeout(() => btn.lastChild.textContent = "Video kaydet", 2500); return; }
-    recording = true;
+    if (!cv0.captureStream || !window.MediaRecorder){ btn.lastChild.textContent = "Bu cihaz desteklemiyor"; setTimeout(() => btn.lastChild.textContent = "Video kaydet", 2500); return; }
+    recording = true; stopTour();
     const label0 = btn.lastChild.textContent; btn.disabled = true;
     const {R, pl} = cur, W = isMobile ? 1280 : 1920, H = Math.round(W * 9 / 16);
-    // görüntü kalitesi: çizim kayıt boyunda yapılır (ekrandaki küçük tuval büyütülmez)
+    // görünüm: kutu, duvar, etiket ve BMS gizli; yalnız paket ve ölçüleri (sonra eski hâline döner)
+    const keep = {box: st.box, walls: st.walls, lid: st.lid, labels: st.labels, dims: st.dims, bms: st.bms, wrap: st.wrap, show: st.show, explode: st.explode, cut: st.cut, solo: st.solo, heat: st.heat, flow: st.flow, taps: st.taps, harness: st.harness, measure: st.measure};
+    Object.assign(st, {box: false, walls: false, lid: false, labels: false, dims: false, bms: false, wrap: false, show: false, explode: 0, cut: false, solo: false, heat: false, flow: false, taps: false, harness: false, vdims: true});
+    if (keep.measure) setMeasure(false);
+    lidAng = LID_OPEN;
+    const camP = camera.position.clone(), camT = controls.target.clone();
     const pr = renderer.getPixelRatio(), sz = renderer.getSize(new THREE.Vector2()), asp = camera.aspect, hadFx = !!fx;
     if (hadFx) dropFX();
-    renderer.setPixelRatio(1); renderer.setSize(W, H, false); camera.aspect = W / H; camera.updateProjectionMatrix(); needs = true;
+    renderer.setPixelRatio(1); renderer.setSize(W, H, false); camera.aspect = W / H; camera.updateProjectionMatrix();
+    build();
+    // kamera paketin kendisine göre (kutuya göre değil) yaklaşsın; ölçü etiketleri kadraja girsin
+    const bb = new THREE.Box3(); A.cells.forEach(it => bb.expandByPoint(it.body));
+    bb.expandByScalar(Math.max(R.len, R.d) * 0.6);
+    const ctr = bb.getCenter(new THREE.Vector3()), pd = bb.getSize(new THREE.Vector3()).length();
+    ctr.y -= bb.getSize(new THREE.Vector3()).y * 0.18;   // paket kadrajda biraz yukarıda: alttaki ölçüler bilgi şeridinin üstünde kalsın
+    const B = R.box, boxD = Math.hypot(B.L, B.W, B.H), kk = Math.max(0.25, Math.min(1.2, pd / boxD * 0.98));
+    const scenes = [
+      {cap: "3D görünüm", view: "iso", dur: 3.4},
+      {cap: "Önden · uzunluk × yükseklik", view: "front", dur: 3.2},
+      {cap: "Yandan · genişlik × yükseklik", view: "side", dur: 3.2},
+      {cap: "Üstten · uzunluk × genişlik", view: "top", dur: 3.2},
+      {cap: "Bitmiş paket", view: "iso", dur: 4.2, wrap: true},
+    ];
+    const total = scenes.reduce((s, x) => s + x.dur, 0);
     const out = document.createElement("canvas"); out.width = W; out.height = H;
     const g = out.getContext("2d");
     let logo = null;
@@ -2715,134 +2735,68 @@ const V3 = (() => {
     const u = W / 100, band = Math.round(H * 0.11);
     const font = (w, s, f) => `${w} ${s}px ${f}`;
     const disp = '"Barlow Condensed","Arial Narrow",Arial,sans-serif', sans = '"IBM Plex Sans",Arial,sans-serif', mono = '"IBM Plex Mono",monospace';
-    // zaman makinesi bölümü: bu paket şu anki senaryoyla ne kadar çalışır (tur bittikten sonra, kapanıştan önce)
-    const tmr = (typeof TM !== "undefined" && TM && TM.simNow) ? TM.simNow(R, pl) : null, TMD = 9;
-    const fmtT = s => { s = Math.max(0, Math.round(s)); const h = Math.floor(s / 3600), m = Math.floor(s % 3600 / 60), x = s % 60; return (h ? h + ":" + String(m).padStart(2, "0") : String(m)) + ":" + String(x).padStart(2, "0"); };
-    let tmAv = null;
-    if (tmr){
-      // dur-kalkta gerilim dalgalı: bir sürüş döngüsü boyunca ortalama çizilir
-      const fr = tmr.frames, w = tmr.drive && tmr.prof ? Math.max(1, Math.round(tmr.prof.per / tmr.dt)) : 0;
-      tmAv = fr.map((f, i) => { if (!w || !i) return f.V; let s = 0, c = 0; for (let j = Math.max(1, i - w); j <= Math.min(fr.length - 1, i + w); j++){ s += fr[j].V; c++; } return s / c; });
-    }
-    const tmNote = tmr ? (tmr.nDs ? "Not: Hücre datasheet değerleriyle (girilmeyenler tipik) hesaplanmıştır; gerçek kullanımda süre, menzil ve sıcaklık farklılık gösterebilir."
-      : "Not: Evrensel (tipik) hücre datasheet değerleri kullanılmıştır; gerçek kullanımda süre, menzil ve sıcaklık farklılık gösterebilir.") : "";
-    const drawTM = tt => {
-      const fr = tmr.frames, n = fr.length, P = tmr.P, k = Math.min(1, tt / 0.5);
-      g.fillStyle = `rgba(7,8,12,${0.9 * k})`; g.fillRect(0, 0, W, H - band);
-      g.globalAlpha = k; g.textBaseline = "middle"; g.textAlign = "left";
-      const p = Math.min(1, Math.max(0, (tt - 0.7) / (TMD - 2.4))), fi = Math.round(p * (n - 1)), f = fr[fi], tEnd = fr[n - 1].t;
-      const x0 = u * 5, x1 = W - u * 5, y0 = H * 0.17;
-      g.fillStyle = "#ff8f1f"; g.font = font(600, u * 1.35, mono); g.fillText(`ZAMAN MAKİNESİ · ${tmr.scnName.toLocaleUpperCase("tr")} · ORTAM ${fmt(P.amb, 0)} °C`, x0, y0);
-      g.fillStyle = "#ffffff"; g.font = font(800, u * 3.4, disp); g.fillText("BU PAKET NE KADAR ÇALIŞIR?", x0, y0 + u * 3.4);
-      // canlı değerler (solda)
-      const ry = y0 + u * 8;
-      const km = tmr.drive ? f.E / (P.whkm * tmr.pm) : null;
-      [["SÜRE", fmtT(f.t)], km != null ? ["YOL", `${fmt(km, 0)} km`] : ["ÇEKİLEN", `${fmt(f.Q, 1)} Ah`], ["ŞARJ", `%${fmt(Math.max(0, Math.min(1, f.soc)) * 100, 0)}`], ["EN SICAK HÜCRE", `${fmt(f.Tmax, 1)} °C`]].forEach(([a, b], i) => {
-        g.fillStyle = "#9ba4b8"; g.font = font(500, u * 1.1, mono); g.fillText(a, x0, ry + i * u * 5.6);
-        g.fillStyle = i === 3 ? "#ff8f1f" : "#ffffff"; g.font = font(700, u * 3, disp); g.fillText(b, x0, ry + i * u * 5.6 + u * 2.5);
-      });
-      // grafik (sağda): üstte gerilim, altta en sıcak hücre
-      const cx0 = x0 + u * 19, cx1 = x1, cy0 = y0 + u * 6.5, cy1 = H - band - u * 9.5, ch = cy1 - cy0;
-      g.fillStyle = "rgba(15,17,26,.96)"; g.fillRect(cx0, cy0, cx1 - cx0, ch);
-      g.strokeStyle = "rgba(61,107,255,.5)"; g.lineWidth = 2; g.strokeRect(cx0, cy0, cx1 - cx0, ch);
-      const px = t => cx0 + u * 1.5 + (cx1 - cx0 - u * 3) * t / tEnd;
-      const vTop = cy0 + u * 2.6, vH = ch * 0.5, tTop = vTop + vH + u * 2.4, tH = cy1 - u * 1.2 - tTop;
-      let v0 = tmr.Vcut, v1 = -Infinity; tmAv.forEach(v => { v1 = Math.max(v1, v); v0 = Math.min(v0, v); }); const vp = (v1 - v0) * 0.08 + 0.5; v0 -= vp; v1 += vp;
-      const T0 = P.amb - 1, T1 = Math.max(P.amb + 6, tmr.sum.Tmax + 2, tmr.sum.Tmax > P.cd.tmax - 15 ? P.cd.tmax + 3 : -Infinity);
-      const yV = v => vTop + vH * (1 - (v - v0) / (v1 - v0)), yT = T => tTop + tH * (1 - (T - T0) / (T1 - T0));
-      g.font = font(600, u * 1.05, mono);
-      g.fillStyle = "#7fa0ff"; g.fillText("GERİLİM (V)", cx0 + u * 1.5, cy0 + u * 1.3);
-      g.fillStyle = "#ff8f1f"; g.fillText("EN SICAK HÜCRE (°C)", cx0 + u * 1.5, tTop - u * 1.2);
-      g.setLineDash([u * 0.6, u * 0.5]); g.strokeStyle = "#ff6a55"; g.lineWidth = 2;
-      g.beginPath(); g.moveTo(px(0), yV(tmr.Vcut)); g.lineTo(px(tEnd), yV(tmr.Vcut)); g.stroke(); g.setLineDash([]);
-      g.fillStyle = "#ff6a55"; g.textAlign = "right"; g.fillText(`BMS kesme ≈ ${fmt(tmr.Vcut, 1)} V`, cx1 - u * 1.5, yV(tmr.Vcut) - u * 0.9); g.textAlign = "left";
-      const line = (fy, col) => { g.strokeStyle = col; g.lineWidth = u * 0.32; g.lineJoin = "round"; g.beginPath(); const st = Math.max(1, Math.ceil(n / 600)); for (let i = 0; i <= fi; i += st) (i ? g.lineTo : g.moveTo).call(g, px(fr[i].t), fy(i)); g.lineTo(px(f.t), fy(fi)); g.stroke(); };
-      line(i => yV(tmAv[i]), "#3d6bff"); line(i => yT(fr[i].Tmax), "#ff8f1f");
-      g.strokeStyle = "rgba(255,255,255,.8)"; g.lineWidth = 2; g.beginPath(); g.moveTo(px(f.t), cy0 + u * 0.6); g.lineTo(px(f.t), cy1 - u * 0.6); g.stroke();
-      // oynatma çubuğu (uygulamadaki gibi)
-      const by = H - band - u * 5.6, bx0 = x0 + u * 3.2, bx1 = x1 - u * 15;
-      g.fillStyle = "#ff8f1f"; g.beginPath(); g.moveTo(x0, by - u * 1.1); g.lineTo(x0 + u * 1.9, by); g.lineTo(x0, by + u * 1.1); g.closePath(); g.fill();
-      g.fillStyle = "rgba(255,255,255,.16)"; g.fillRect(bx0, by - u * 0.25, bx1 - bx0, u * 0.5);
-      g.fillStyle = "#ff8f1f"; g.fillRect(bx0, by - u * 0.25, (bx1 - bx0) * p, u * 0.5);
-      g.beginPath(); g.arc(bx0 + (bx1 - bx0) * p, by, u * 0.75, 0, Math.PI * 2); g.fill();
-      g.fillStyle = "#ffffff"; g.font = font(600, u * 1.4, mono); g.textAlign = "right"; g.fillText(`${fmtT(f.t)} / ${fmtT(tEnd)}`, x1, by); g.textAlign = "left";
-      // son: BMS kesti
-      if (p >= 1 && tmr.end && tmr.end.why !== "time"){
-        g.fillStyle = "#ff6a55"; const tx = tmr.end.why === "cut" ? "BMS KESTİ" : "PAKET BOŞALDI";
-        g.font = font(700, u * 1.5, mono); const tw = g.measureText(tx).width; g.fillRect(cx1 - tw - u * 3, cy1 + u * 0.8, tw + u * 2, u * 2.6);
-        g.fillStyle = "#170303"; g.fillText(tx, cx1 - tw - u * 2, cy1 + u * 2.1);
-      }
-      g.fillStyle = "#9ba4b8"; g.font = font(400, u * 1.05, sans); g.fillText(tmNote, x0, H - band - u * 2.2);
-      g.globalAlpha = 1;
-      brand();   // logo karartmanın üstünde kalsın
-    };
     const mimes = ["video/mp4;codecs=avc1.640028", "video/mp4", "video/webm;codecs=vp9", "video/webm"];
     const mime = mimes.find(m => MediaRecorder.isTypeSupported && MediaRecorder.isTypeSupported(m)) || "";
     const stream = out.captureStream(30);
     const recd = new MediaRecorder(stream, mime ? {mimeType: mime, videoBitsPerSecond: isMobile ? 6e6 : 12e6} : {videoBitsPerSecond: 8e6});
     const chunks = []; recd.ondataavailable = e => { if (e.data && e.data.size) chunks.push(e.data); };
     const stopped = new Promise(res => recd.onstop = res);
-    // kare kare: 3D görüntü + logo + alt bilgi şeridi + sahne yazısı; sonunda kapanış kartı
-    const END = 2.6; let t0 = 0, endAt = 0, raf = 0, tourEnd = 0;
-    // üst sol: logo ve marka
-    function brand(){
+    const brand = () => {
       const ls = u * 5.2;
       if (logo) g.drawImage(logo, u * 2.4, u * 2.2, ls, ls);
       g.textBaseline = "middle"; g.textAlign = "left"; g.fillStyle = "#ffffff"; g.font = font(700, u * 2.6, disp);
       g.fillText("KADRO TEKNOLOJİ", u * 2.4 + ls + u * 1.2, u * 2.2 + ls * 0.38);
       g.fillStyle = "#ff8f1f"; g.font = font(500, u * 1.25, mono);
       g.fillText("Kadro Tasarım · batarya paketi", u * 2.4 + ls + u * 1.2, u * 2.2 + ls * 0.8);
-    }
+    };
+    let t0 = 0, si = -1, raf = 0;
+    const goScene = i => {
+      si = i; const sc = scenes[i];
+      if (!!sc.wrap !== st.wrap){ st.wrap = !!sc.wrap; build(); }
+      flyTo(dirFor(sc.view), kk, i === 0, ctr, 1.1);
+    };
     const draw = now => {
-      if (!t0) t0 = now;
+      if (!t0){ t0 = now; goScene(0); }
+      const t = (now - t0) / 1000;
+      let acc = 0, want = scenes.length - 1;
+      for (let i = 0; i < scenes.length; i++){ if (t < acc + scenes[i].dur){ want = i; break; } acc += scenes[i].dur; }
+      if (want !== si) goScene(want);
       g.fillStyle = "#07080c"; g.fillRect(0, 0, W, H);
       g.drawImage(cv0, 0, 0, W, H);
       brand();
-      // sahne yazısı (tanıtım turu)
-      if (tour && tour.scenes[tour.i]){
-        const cap = tour.scenes[tour.i].cap.toLocaleUpperCase("tr");
-        g.font = font(700, u * 2.2, disp); const tw = g.measureText(cap).width;
-        g.fillStyle = "rgba(7,8,12,.72)"; g.fillRect(u * 2.4, H - band - u * 6.2, tw + u * 2.4, u * 3.6);
-        g.fillStyle = "#3d6bff"; g.fillRect(u * 2.4, H - band - u * 6.2, u * 0.35, u * 3.6);
-        g.fillStyle = "#ffffff"; g.fillText(cap, u * 3.6, H - band - u * 4.4);
-      }
+      // sahne yazısı
+      const cap = scenes[si].cap.toLocaleUpperCase("tr");
+      g.font = font(700, u * 2.2, disp); const tw = g.measureText(cap).width;
+      g.fillStyle = "rgba(7,8,12,.72)"; g.fillRect(u * 2.4, H - band - u * 6.2, tw + u * 2.4, u * 3.6);
+      g.fillStyle = "#3d6bff"; g.fillRect(u * 2.4, H - band - u * 6.2, u * 0.35, u * 3.6);
+      g.fillStyle = "#ffffff"; g.textAlign = "left"; g.fillText(cap, u * 3.6, H - band - u * 4.4);
       // alt şerit: paket bilgisi
       g.fillStyle = "rgba(11,14,16,.92)"; g.fillRect(0, H - band, W, band);
       g.fillStyle = "#ff8a1e"; g.fillRect(0, H - band, W, Math.max(3, band * 0.05));
-      g.fillStyle = "#ffffff"; g.font = font(700, band * 0.4, disp); g.textAlign = "left";
+      g.fillStyle = "#ffffff"; g.font = font(700, band * 0.4, disp);
       g.fillText(spec, u * 2.4, H - band / 2);
       g.textAlign = "right"; g.fillStyle = "#a9b4bd"; g.font = font(500, band * 0.24, sans);
       g.fillText(`${pl.used} hücre · ${new Date().toLocaleDateString("tr-TR")}`, W - u * 2.4, H - band / 2);
       g.textAlign = "left";
-      // tur bitti: önce zaman makinesi, sonra kapanış kartı
-      if (!tour && !tourEnd) tourEnd = now;
-      const tmT = tourEnd ? (now - tourEnd) / 1000 : 0;
-      if (!tour && tmr && tmT < TMD) drawTM(tmT);
-      else if (!tour){
-        if (!endAt) endAt = now;
-        const k = Math.min(1, (now - endAt) / 600);
-        g.fillStyle = `rgba(7,8,12,${0.82 * k})`; g.fillRect(0, 0, W, H);
-        g.globalAlpha = k; g.textAlign = "center";
-        const bs = u * 11; if (logo) g.drawImage(logo, W / 2 - bs / 2, H * 0.22, bs, bs);
-        g.fillStyle = "#ffffff"; g.font = font(800, u * 5, disp); g.fillText("KADRO TEKNOLOJİ", W / 2, H * 0.22 + bs + u * 4);
-        g.fillStyle = "#ff8f1f"; g.font = font(700, u * 3, disp); g.fillText(spec, W / 2, H * 0.22 + bs + u * 8.6);
-        g.globalAlpha = 1; g.textAlign = "left";
-        if (now - endAt > END * 1000){ recd.stop(); return; }
-      }
-      btn.lastChild.textContent = tour ? `Kaydediliyor… ${Math.min(80, Math.round(((tour.i + 0.5) / tour.scenes.length) * 80))}%` : (tmr && tmT < TMD) ? `Kaydediliyor… ${80 + Math.round(tmT / TMD * 18)}%` : "Bitiriliyor…";
+      btn.lastChild.textContent = `Kaydediliyor… ${Math.min(99, Math.round(t / total * 100))}%`;
       needs = true;
+      if (t >= total){ recd.stop(); return; }
       raf = requestAnimationFrame(draw);
     };
     try {
       recd.start(500);
-      startTour();
       raf = requestAnimationFrame(draw);
       await stopped;
     } catch (e){ try { recd.stop(); } catch (err) {} }
     cancelAnimationFrame(raf); stream.getTracks().forEach(t => t.stop());
+    // eski görünüm ve kamera
+    delete st.vdims; Object.assign(st, keep);
     renderer.setPixelRatio(pr); renderer.setSize(sz.x, sz.y, false); camera.aspect = asp; camera.updateProjectionMatrix();
+    recording = false;
+    build(); fly = null; camera.position.copy(camP); controls.target.copy(camT); controls.update();
+    if (keep.measure) setMeasure(true);
     if (hadFx) applyQuality(); else resize();
-    needs = true; recording = false;
+    needs = true;
     let msg = "Kaydedildi ✓";
     try {
       const type = (mime || "video/webm").split(";")[0], ext = type.includes("mp4") ? "mp4" : "webm";

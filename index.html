@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="tr">
 <head>
-<meta name="app-ver" content="01ba038306">
+<meta name="app-ver" content="b9a56061fb">
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#07080c">
@@ -363,7 +363,11 @@ label.chip{background:none;padding:0;border-radius:999px;font:inherit}
 .cmp-figs{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin-top:14px}
 @media (max-width:700px){ .cmp-figs{grid-template-columns:minmax(0,1fr)} }
 .man-tools{display:grid;gap:10px;margin-bottom:12px}
-.man-grid{display:grid;grid-template-columns:minmax(0,1.35fr) minmax(0,1fr);gap:14px;align-items:start}
+.man-grid{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);gap:14px;align-items:start}
+/* 3D, ızgaranın yanında; sayfa kayarken görünür kalır (dar ekranda ızgaranın altında) */
+.man-right{display:grid;gap:12px;position:sticky;top:12px}
+.man-3d .v3d{height:clamp(320px,52vh,560px)}
+@media (max-width:880px){ .man-right{position:static} .man-3d .v3d{height:clamp(300px,48vh,460px)} }
 @media (max-width:880px){ .man-grid{grid-template-columns:minmax(0,1fr)} }
 .man-editor svg{touch-action:none;cursor:crosshair;-webkit-user-select:none;user-select:none}
 .brush{display:inline-flex;align-items:center;gap:6px;flex-wrap:wrap}
@@ -1162,11 +1166,12 @@ option,optgroup{background-color:var(--surface);color:var(--ink)}
         <div id="man-selbar" class="man-selbar" hidden></div>
       </div>
       <div class="man-right">
+        <div id="man-slot" class="slot man-3d"></div>
         <div id="man-sum" class="man-sum"></div>
         <ul id="man-checks" class="checks one"></ul>
       </div>
     </div>
-    <div class="sub"><h3>3D görünüm</h3><div id="tb-man"></div><div id="man-slot" class="slot"></div></div>
+    <div class="sub"><h3>3D ayarları</h3><div id="tb-man"></div></div>
     <div class="hint" style="margin-top:8px">Buradaki kutu ve hücre ayarları sadece bu sekmede geçerlidir; “Kutu hesabı”ndaki kutuyu, hücreyi ve planları değiştirmez. Sadece kenar boşluğu ve işçilik süreleri iki tarafta ortaktır.</div>
     <div class="hint" style="margin-top:4px">Yuvaya dokunun ya da parmağınızı sürükleyin: seçili grup (fırça) o yuvalara yerleşir. Aynı gruba ait bir hücreden başlayıp sürüklerseniz o hücreler kaldırılır. <b>Sil</b> ile dokunduğunuz ya da üzerinden geçtiğiniz hücreler silinir, <b>Taşı</b> ile bir grubu sürükleyip yerini değiştirirsiniz, <b>Seç</b> ile kutu çizip birden çok hücreyi seçer; topluca taşır, siler ya da bir gruba atarsınız. Kutuplar, şeritler ve kat geçişleri otomatik planlardaki kurallarla çizilir. 3D ayarları (nikel, tutucu, ısı haritası…) “3D görünüm” sekmesindekilerle aynıdır.</div>
   </section>

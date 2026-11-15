@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="tr">
 <head>
-<meta name="app-ver" content="745ad38e2b">
+<meta name="app-ver" content="01ba038306">
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#07080c">
@@ -1121,12 +1121,14 @@ option,optgroup{background-color:var(--surface);color:var(--ink)}
           <button type="button" class="btn" id="man-gnext">İlk boş grup</button>
         </div>
         <div class="seg" role="group" aria-label="Araç" id="man-tool">
+          <button type="button" data-tool="snake" title="Boş bir yuvaya dokunun: grubun eksik hücreleri çevresine kendiliğinden yerleşir">Tek dokunuş</button>
           <button type="button" data-tool="paint" class="on">Boya</button>
           <button type="button" data-tool="erase">Sil</button>
           <button type="button" data-tool="move">Taşı</button>
           <button type="button" data-tool="select">Seç</button>
         </div>
         <label class="chip" for="man-auto"><input type="checkbox" id="man-auto" checked><span>Grup dolunca sonrakine geç</span></label>
+        <label class="chip" for="man-ghost"><input type="checkbox" id="man-ghost"><span>Hayalet plan</span></label>
       </div>
       <div class="trow">
         <button type="button" class="btn" id="man-from">Seçili plandan başlat</button>
@@ -1713,7 +1715,7 @@ const V3 = (() => {
       // balans kabloları kat birleşmeden lehimlenir: birleşince katlar arasındaki yüzlere ulaşılamaz
       const layerTaps = pl.strips.filter(s => s.L === L && s.tap !== null).sort((a, b) => a.tap - b.tap).map(s => "B" + s.tap);
       if (layerTaps.length) addStep("taps" + L, `Kat ${L + 1}: balans kabloları`, `Bu kattaki balans noktalarına (${layerTaps.join(", ")}) kabloları şimdi lehimleyin; katlar birleşince aradaki yüzlere ulaşılamaz.`, "iso");
-      if (L > 0){
+      if (L > 0 && pl.jumpers && pl.jumpers[L - 1]){   // elle tasarımda kat sırası bozuksa bara olmayabilir
         const j = pl.jumpers[L - 1];
         addStep("jump" + (L - 1), `Kat ${L} → Kat ${L + 1} barası`, `Katların arasına izolasyon koyun. Kat ${L} ${gname(j.from)} (+) ile Kat ${L + 1} ${gname(j.to)} (−) arasına bara bağlayın (≥ ${fmt(pl.P * R.ah * R.crate, 0)} A).`, "iso");
       }
@@ -1899,7 +1901,7 @@ const V3 = (() => {
       if (st.wrap || (!inL(j.from.L) && !inL(j.to.L))) return;
       const ca = faceC(j.from.L, plusFace(j.from), lift), cb = faceC(j.to.L, minusFace(j.to), lift);
       const oa = out(j.from.c, 8), ob = out(j.to.c, 8);
-      tube([pos(j.from.c.x, j.from.c.y, ca), pos(oa.x, oa.y, ca), pos(ob.x, ob.y, cb), pos(j.to.c.x, j.to.c.y, cb)], Math.max(2, R.d * 0.08), 0xb87333, sid["jump" + k]);
+      tube([pos(j.from.c.x, j.from.c.y, ca), pos(oa.x, oa.y, ca), pos(ob.x, ob.y, cb), pos(j.to.c.x, j.to.c.y, cb)], Math.max(2, R.d * 0.08), 0xb87333, sid["jump" + k] ?? sid["cells" + j.to.L]);
     });
 
     // kırmızı izolasyon kâğıdı (fish paper): katların arasında; duvarlar açıksa paketin altında da
@@ -1910,7 +1912,7 @@ const V3 = (() => {
         const sc = {x: 1, y: 1, z: 1}; sc[AX[o.a]] = w; sc[AX[o.b]] = h; sc[AX[o.c]] = 0.5;
         const m = new THREE.Mesh(new THREE.BoxGeometry(sc.x, sc.y, sc.z), fp); m.position.copy(pos(cx, cy, c)); m.receiveShadow = shadows; addMesh(m, step);
       };
-      for (let L = 1; L < pl.Lu; L++) if (inL(L) || inL(L - 1)) sheet((faceC(L - 1, "top", 0) + faceC(L, "bot", 0)) / 2, sid["jump" + (L - 1)]);
+      for (let L = 1; L < pl.Lu; L++) if (inL(L) || inL(L - 1)) sheet((faceC(L - 1, "top", 0) + faceC(L, "bot", 0)) / 2, sid["jump" + (L - 1)] ?? sid["cells" + L]);
       if (st.walls && inL(0)) sheet(faceC(0, "bot", T + 1.2), sid.box);
     }
 
@@ -4162,6 +4164,7 @@ const MAN = (() => {
     $("man-orient").value = st.oKey; $("man-kind").value = st.kind;
     $("man-P").value = st.P || "";
     $("man-auto").checked = !!st.autoNext;
+    $("man-ghost").checked = !!st.ghost;
     document.querySelectorAll("#man-tool button").forEach(b => b.classList.toggle("on", b.dataset.tool === st.tool));
     selBar();
     const chip = $("man-g"); chip.textContent = "S" + st.curG; chip.style.background = gColor(st.curG - 1);
@@ -4174,7 +4177,19 @@ const MAN = (() => {
     }).join("");
     lb.querySelectorAll("button").forEach(b => b.onclick = () => { st.L = +b.dataset.l; persist(); drawTools(); drawEditor(); });
   }
-  let geom = null, selK = new Set(), selL = -1, selG = "", marq = null, dragSel = null, edBound = false;
+  let geom = null, selK = new Set(), selL = -1, selG = "", marq = null, dragSel = null, edBound = false, ghostNote = "";
+  // hayalet plan: seçili otomatik planın (aynı hücre yönü ve ızgara) bu kattaki hücreleri → yuva → grup no
+  function ghostMap(){
+    ghostNote = "";
+    if (!st.ghost || !grid) return null;
+    const pl = lastDetail && lastDetail[1];
+    if (!pl || pl.manual || !pl.layers){ ghostNote = "Hayalet plan için önce “Kutu hesabı”nda bir plan seçin."; return null; }
+    if (pl.grid.id !== gid()){ ghostNote = `Seçili plan “${escH(pl.grid.o.name)} · ${escH(pl.grid.kind)}”; hayaleti görmek için hücre yönünü ve ızgarayı ona ayarlayın.`; return null; }
+    const m = new Map(); let miss = 0;
+    (pl.layers[st.L] || []).forEach(grp => grp.cells.forEach(c => { const k = ik(c); if (idx.has(k)) m.set(k, grp.g + 1); else miss++; }));
+    if (miss) ghostNote = "Seçili plan farklı bir kutu ölçüsüyle; hayaletin bir kısmı bu kutuya düşmüyor.";
+    return m;
+  }
   function drawEditor(){
     const box = $("man-editor");
     if (!grid){ box.innerHTML = `<div class="v3d-msg">${probMsg || "Bu hücre yönü ve ızgarada kutuya hücre sığmıyor."}</div>`; geom = null; return; }
@@ -4190,8 +4205,16 @@ const MAN = (() => {
     s += `<text x="${pad + W / 2}" y="${pad + H + 16}" font-size="12" text-anchor="middle" fill="var(--muted)">${DIM_NAMES[o.a]} ${fmt(fullA, 0)} mm</text>`;
     s += `<text x="${pad + W + 16}" y="${pad + H / 2}" font-size="12" text-anchor="middle" fill="var(--muted)" transform="rotate(90 ${pad + W + 16} ${pad + H / 2})">${DIM_NAMES[o.b]} ${fmt(fullB, 0)} mm</text>`;
     if (selL !== st.L || selG !== gid()){ selK.clear(); selL = st.L; selG = gid(); }   // kat ya da ızgara değişince seçim temizlenir
+    const ghost = ghostMap();
     grid.cells.forEach(c => {
       const n = lay[ik(c)], cx = X(c.x), cy = Y(c.y);
+      const gh = ghost && ghost.get(ik(c));
+      if (!n && gh){
+        // hayalet plan: seçili otomatik planın bu kattaki hücresi, soluk turuncu (üstüne çizilebilir)
+        s += `<circle cx="${cx}" cy="${cy}" r="${r - 1}" fill="rgba(255,143,31,.13)" stroke="#ff8f1f" stroke-opacity=".6" stroke-dasharray="4 2" pointer-events="none"/>`;
+        s += `<text x="${cx}" y="${cy}" font-size="${fs * 0.85}" font-weight="700" text-anchor="middle" dominant-baseline="central" fill="#ff8f1f" opacity=".7" pointer-events="none">${gh}</text>`;
+        return;
+      }
       if (n){
         const isCur = n === st.curG;
         s += `<circle cx="${cx}" cy="${cy}" r="${r - 0.8}" fill="${gSoft(n - 1)}" stroke="${gColor(n - 1)}" stroke-width="${isCur ? 3.2 : 1.8}"/>`;
@@ -4204,7 +4227,7 @@ const MAN = (() => {
     });
     s += `</svg>`;
     box.innerHTML = s;
-    $("man-cap").innerHTML = `Kat ${st.L + 1} <span>· ${faceNames(grid.o)[0].toLowerCase()} tarafından · ${DIM_NAMES[o.a]} × ${DIM_NAMES[o.b]}${st.L > 0 ? " · soluk numaralar alttaki kat" : ""}</span>`;
+    $("man-cap").innerHTML = `Kat ${st.L + 1} <span>· ${faceNames(grid.o)[0].toLowerCase()} tarafından · ${DIM_NAMES[o.a]} × ${DIM_NAMES[o.b]}${st.L > 0 ? " · soluk numaralar alttaki kat" : ""}${ghost && ghost.size ? " · turuncu kesikli: hayalet plan" : ""}</span>${ghostNote ? `<div class="hint warn">${ghostNote}</div>` : ""}`;
     bindEditor();
   }
   // Dokunma / fare olayları ızgaranın kendisine değil, onu tutan kalıcı kutuya (man-editor) bağlanır.
@@ -4235,6 +4258,7 @@ const MAN = (() => {
       if (!c) return;
       e.preventDefault(); capture(e);
       if (st.tool === "move"){ if (moveStart(c)) box.classList.add("moving"); return; }
+      if (st.tool === "snake"){ snakeFill(c); return; }
       const lay = design()[st.L] || {};
       snap();
       stroke = st.tool === "erase" ? "erase" : (lay[ik(c)] === st.curG ? "remove" : "paint");
@@ -4331,6 +4355,40 @@ const MAN = (() => {
     // dolu gruplar ve başka katta başlamış gruplar atlanır (bir grup tek katta olmalı)
     while (info.has(m) && (info.get(m).cells.length >= st.P || !info.get(m).Ls.has(st.L))) m++;
     return m;
+  }
+  // ---- Yılan fırçası: tek dokunuşla grubun eksik hücreleri, dokunulan yuvanın çevresine sıkı blok olarak yerleşir ----
+  function snakeFill(c){
+    const d = design(), lay = d[st.L] = d[st.L] || {}, K = ik(c);
+    if (lay[K]){ flash(`Bu yuva dolu (S${lay[K]}). Grubu yerleştirmek için boş bir yuvaya dokunun.`, true); return; }
+    let g = st.curG, e = groupsInfo().get(g);
+    if (e && e.cells.length >= st.P){
+      if (!st.autoNext){ flash(`S${g} zaten ${st.P} hücre. Sonraki gruba geçin (+).`, true); return; }
+      g = st.curG = nextFree(g + 1); e = groupsInfo().get(g);
+    }
+    if (e && !e.Ls.has(st.L)){ flash(`S${g} Kat ${e.L + 1}'de. Bir grup tek katta olmalı; başka bir grup numarası seçin.`, true); return; }
+    const need = st.P - (e ? e.cells.length : 0);
+    // komşu = bir hücre aralığı mesafedeki yuva (kare ve petek ızgarada aynı kural)
+    const near = (a, b) => Math.hypot(a.x - b.x, a.y - b.y) <= R.p * 1.15;
+    const pick = [c], picked = new Set([K]), seed = e ? e.cells.concat([c]) : [c];
+    while (pick.length < need){
+      let best = null, bd = Infinity;
+      grid.cells.forEach(q => {
+        const k = ik(q); if (picked.has(k) || lay[k]) return;
+        if (!pick.some(p => near(p, q)) && !seed.some(p => near(p, q))) return;   // bloğa değmeli
+        // dokunulan yuvaya en yakın olan önce: sıkı, kare jig'e uygun blok; eşitlikte sıra sırasıyla
+        const dd = Math.hypot(q.x - c.x, q.y - c.y) + q.j * 1e-3 + q.i * 1e-6;
+        if (dd < bd){ bd = dd; best = q; }
+      });
+      if (!best) break;
+      pick.push(best); picked.add(ik(best));
+    }
+    snap();
+    pick.forEach(q => { lay[ik(q)] = g; });
+    const full = pick.length >= need;
+    if (st.autoNext && full) st.curG = nextFree(g + 1);
+    persist(); changed();
+    flash(full ? `S${g} yerleşti (${st.P} hücre).${st.autoNext ? ` Sıradaki: S${st.curG} — boş bir yuvaya dokunun.` : ""}`
+      : `S${g} için çevrede yalnız ${pick.length} boş yuva vardı (${st.P - need + pick.length}/${st.P}). Eksikleri Boya ile ekleyin.`, !full);
   }
   function applyAt(c){
     const K = ik(c);
@@ -4527,10 +4585,11 @@ const MAN = (() => {
     $("man-kind").addEventListener("change", e => { st.kind = e.target.value; st.L = 0; persist(); refresh(); });
     $("man-P").addEventListener("change", e => { const v = Math.round(num("man-P")); if (v >= 1 && v <= 200){ st.P = v; persist(); refresh(); } else drawTools(); });
     $("man-auto").addEventListener("change", e => { st.autoNext = e.target.checked; persist(); });
+    $("man-ghost").addEventListener("change", e => { st.ghost = e.target.checked; persist(); drawEditor(); });
     $("man-gminus").addEventListener("click", () => { st.curG = Math.max(1, st.curG - 1); persist(); drawTools(); drawEditor(); });
     $("man-gplus").addEventListener("click", () => { st.curG = Math.min(400, st.curG + 1); persist(); drawTools(); drawEditor(); });
     $("man-gnext").addEventListener("click", () => { st.curG = nextFree(1); persist(); drawTools(); drawEditor(); });
-    const TOOL_HINT = {paint: "Boya: yuvalara dokunun ya da parmağınızı sürükleyin; seçili grup yerleşir.", erase: "Sil: silmek istediğiniz hücrelere dokunun ya da üzerlerinden sürükleyin.",
+    const TOOL_HINT = {snake: "Tek dokunuş: boş bir yuvaya dokunun; seçili grubun hücreleri çevresine blok olarak yerleşir, sonra sıradaki gruba geçilir.", paint:"Boya: yuvalara dokunun ya da parmağınızı sürükleyin; seçili grup yerleşir.", erase: "Sil: silmek istediğiniz hücrelere dokunun ya da üzerlerinden sürükleyin.",
       move: "Taşı: bir grubun hücresini tutup yeni yerine sürükleyin.", select: "Seç: kutu çizerek birden çok yuva seçin; sonra taşıyın, silin ya da bir gruba atayın."};
     document.querySelectorAll("#man-tool button").forEach(b => b.addEventListener("click", () => {
       st.tool = b.dataset.tool; if (st.tool !== "select") selK.clear();

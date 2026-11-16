@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="tr">
 <head>
-<meta name="app-ver" content="5da6379069">
+<meta name="app-ver" content="e595237c42">
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#07080c">
@@ -2028,7 +2028,7 @@ const V3 = (() => {
     const bmsNote = $$("v3d-bms");
     if (bmsNote) bmsNote.innerHTML = (R.free && st.wrap) ? "Bitmiş paket: ölçüler izolasyon kağıdı ve nikel dahil; BMS ayrı parça olduğu için gösterilmez."
       : !st.bms ? "BMS gizli. Görmek için “BMS”e dokunun." : !bms ? "" : R.free
-      ? `Kutusuz dizilim: BMS (${fmt(R.bms.l)}×${fmt(R.bms.w)}×${fmt(R.bms.h)} mm) paketin yanında gösterildi; ölçüler yalnız hücre bloğunu (nikel ve izolasyon hariç) kapsar.`
+      ? `Kutusuz dizilim: BMS (${fmt(R.bms.l)}×${fmt(R.bms.w)}×${fmt(R.bms.h)} mm) paketin yanında gösterildi; oklu ölçüler izolasyon kağıdı ve nikel dahil bitmiş paketi gösterir (yukarıdaki “Bitmiş ölçü” ile aynı).`
       : bms.fits
       ? `BMS (${fmt(R.bms.l)}×${fmt(R.bms.w)}×${fmt(R.bms.h)} mm) kutuya sığıyor; B− ucuna en yakın boşluğa yerleştirildi (B− ucuna ~${fmt(bms.dist, 0)} mm).`
       : `<span class="warn">BMS (${fmt(R.bms.l)}×${fmt(R.bms.w)}×${fmt(R.bms.h)} mm) kutuya sığmıyor.</span> Kırmızı kutu, kutunun dışında gösterildi. “BMS / kablo payı” ile yer ayırın ya da daha küçük BMS seçin.`;
